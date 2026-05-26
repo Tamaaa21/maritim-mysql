@@ -57,6 +57,18 @@ export default function LayananBerbayarModal({ isOpen, onClose }: LayananBerbaya
     }
 
     try {
+      await fetch("/api/submit/layanan-berbayar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.email,
+          nama_lengkap: data.namaLengkap,
+          alamat: data.alamat,
+          instansi: data.instansi || null,
+          no_hp: data.noHP,
+        }),
+      });
+
       setSubmitted(true);
       await new Promise(r => setTimeout(r, 1500));
       reset();
@@ -64,6 +76,7 @@ export default function LayananBerbayarModal({ isOpen, onClose }: LayananBerbaya
       onClose();
     } catch (error) {
       console.error(error);
+      alert("Gagal mengirim permohonan");
     }
   };
 

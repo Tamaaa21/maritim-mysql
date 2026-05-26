@@ -24,6 +24,20 @@ export default function BukuTamuModal({ isOpen, onClose }: BukuTamuModalProps) {
 
   const onSubmit = async (data: BukuTamuFormData) => {
     try {
+      const response = await fetch("/api/submit/buku-tamu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama: data.nama,
+          email: data.email,
+          no_telepon: data.noTelepon,
+          instansi: data.instansi || null,
+          keperluan: data.keperluan,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to submit");
+
       setSubmitted(true);
       await new Promise(r => setTimeout(r, 1500));
       reset();
@@ -31,6 +45,7 @@ export default function BukuTamuModal({ isOpen, onClose }: BukuTamuModalProps) {
       onClose();
     } catch (error) {
       console.error(error);
+      alert("Gagal mengirim data");
     }
   };
 

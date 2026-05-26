@@ -108,37 +108,57 @@ export default function PrakiraanSection() {
           </div>
         </div>
 
-        {/* 4 Forecast Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {forecastCards.map((card, i) => (
+        {/* Main Feature & List Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Main Card (Large Feature) */}
+          <div className="lg:col-span-2">
             <button
-              key={i}
-              onClick={() => setSelectedForecast(card)}
-              className="relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer text-left"
-              style={{ minHeight: "260px" }}
+              onClick={() => setSelectedForecast(forecastCards[0])}
+              className="relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer text-left w-full"
+              style={{ aspectRatio: "16/12" }}
             >
               <img
-                src={card.image}
-                alt={card.title}
+                src={forecastCards[0].image}
+                alt={forecastCards[0].title}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className={`absolute inset-0 bg-gradient-to-t ${card.color} to-transparent`} />
-              <div className="absolute inset-0 flex flex-col justify-between p-5">
-                <div className="flex justify-end">
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
-                    <card.icon size={18} className="text-white" />
-                  </div>
-                </div>
+              <div className={`absolute inset-0 bg-gradient-to-t ${forecastCards[0].color} to-transparent`} />
+              <div className="absolute inset-0 flex flex-col justify-end p-6">
                 <div>
-                  <h3 className="text-white font-bold text-base mb-1 leading-tight">{card.title}</h3>
-                  <p className="text-blue-100 text-xs mb-3 leading-relaxed">{card.desc}</p>
-                  <span className="inline-flex items-center gap-1 text-xs text-white/90 group-hover:text-white font-semibold bg-white/20 group-hover:bg-white/30 backdrop-blur-sm px-3 py-1.5 rounded-full transition-colors">
-                    Lihat Selengkapnya <ChevronRight size={12} />
+                  <h3 className="text-white font-bold text-2xl mb-2 leading-tight">{forecastCards[0].title}</h3>
+                  <p className="text-blue-100 text-sm mb-4 leading-relaxed max-w-md">{forecastCards[0].desc}</p>
+                  <span className="inline-flex items-center gap-1 text-sm text-white/90 group-hover:text-white font-semibold bg-white/20 group-hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-full transition-colors">
+                    Lihat Selengkapnya <ChevronRight size={14} />
                   </span>
                 </div>
               </div>
             </button>
-          ))}
+          </div>
+
+          {/* Right: Side List (4 Cards Vertical) */}
+          <div className="flex flex-col gap-4">
+            {forecastCards.slice(1).map((card, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setSelectedForecast(card)}
+                className="flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-[#003399] hover:shadow-md transition-all group"
+              >
+                <div className="relative rounded-lg overflow-hidden flex-shrink-0" style={{ width: "80px", height: "80px" }}>
+                  <img src={card.image} alt={card.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                  <div className={`absolute inset-0 bg-gradient-to-t ${card.color} to-transparent opacity-60`} />
+                </div>
+                <div className="flex flex-col justify-between flex-1 min-w-0">
+                  <div>
+                    <h4 className="text-gray-900 font-bold text-sm leading-tight mb-1 group-hover:text-[#003399] transition-colors line-clamp-2">
+                      {card.title}
+                    </h4>
+                    <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">{card.desc}</p>
+                  </div>
+                  <ChevronRight size={16} className="text-gray-400 group-hover:text-[#003399] transition-colors self-end" />
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Info Banner */}

@@ -82,6 +82,19 @@ export default function LayananNolRupiahModal({ isOpen, onClose }: LayananNolRup
     }
 
     try {
+      await fetch("/api/submit/layanan-nol-rupiah", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.email,
+          nama_lengkap: data.namaLengkap,
+          alamat: data.alamat,
+          instansi: data.instansi || null,
+          no_hp: data.noHP,
+          tipe: selectedType,
+        }),
+      });
+
       setSubmitted(true);
       await new Promise(r => setTimeout(r, 1500));
       reset();
@@ -92,6 +105,7 @@ export default function LayananNolRupiahModal({ isOpen, onClose }: LayananNolRup
       onClose();
     } catch (error) {
       console.error(error);
+      alert("Gagal mengirim permohonan");
     }
   };
 
