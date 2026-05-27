@@ -60,7 +60,7 @@ export default function PrakiraanModal({ isOpen, onClose, data }: PrakiraanModal
             <div className="space-y-4">
               <h3 className="text-base font-bold text-gray-900">Parameter Cuaca</h3>
               <div className="grid grid-cols-2 gap-3">
-                {data.details.map((item, i) => (
+                {(data.details || []).map((item, i) => (
                   <div key={i} className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3">
                     <p className="text-xs text-gray-600 font-medium mb-1">{item.label}</p>
                     <p className="text-lg font-bold text-[#003399]">{item.value}</p>

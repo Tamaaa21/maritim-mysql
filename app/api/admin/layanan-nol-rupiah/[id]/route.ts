@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: Request, context: any) {
+  const params = (context && context.params) ? context.params : (context && typeof context === 'object' ? (context as any) : null);
+  const id = params && params.id ? params.id : (typeof params?.then === 'function' ? (await params).id : undefined);
+  const paramsId = id;
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -21,7 +21,7 @@ export async function DELETE(
     const { error } = await supabase
       .from("layanan_nol_rupiah")
       .delete()
-      .eq("id", params.id);
+      .eq("id", paramsId);
 
     if (error) throw error;
 

@@ -1,20 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Wind, Droplets, Eye, ArrowUp, Cloud, Thermometer, AlertTriangle, Satellite, Waves, BarChart2, Phone } from "lucide-react";
+import { Wind, Droplets, Eye, ArrowUp, Cloud, Thermometer, AlertTriangle, Satellite, Waves, BarChart2, Phone, Loader } from "lucide-react";
 import HeroBackgroundSlideshow from "./HeroBackgroundSlideshow";
-
-const weatherData = {
-  city: "Tegal, Jawa Tengah",
-  updated: "18 Mar 2024, 12.01 WIB",
-  temp: 29,
-  condition: "Cerah Berawan",
-  wind: { speed: 15, direction: "Timur Laut" },
-  humidity: 74,
-  waves: 1.2,
-  tide: "Naik",
-  tideTime: "19.00 WIB",
-};
 
 const quickLinks = [
   { icon: AlertTriangle, label: "Prakiraan", sub: "Cuaca Terkini", color: "text-yellow-400" },
@@ -30,8 +18,66 @@ const bottomLinks = [
   { icon: Phone, label: "Kontak", sub: "Hubungi Kami" },
 ];
 
+interface WeatherData {
+  city: string;
+  temp: number;
+  condition: string;
+  wind: { speed: number; direction: string };
+  humidity: number;
+  waves: number;
+  tide: string;
+  tideTime: string;
+  updated: string;
+}
+
+const FALLBACK_DATA: WeatherData = {
+  city: "Tegal, Jawa Tengah",
+  temp: 29,
+  condition: "Cerah Berawan",
+  wind: { speed: 15, direction: "Timur Laut" },
+  humidity: 74,
+  waves: 1.2,
+  tide: "Naik",
+  tideTime: "19.00 WIB",
+  updated: new Date().toISOString(),
+};
+
 export default function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
+  const [weatherData, setWeatherData] = useState<WeatherData>(FALLBACK_DATA);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch weather data from API
+  const fetchWeatherData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch("/api/bmkg/tegal", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to fetch weather data");
+      const json = await res.json();
+      if (json.success && json.data) {
+        setWeatherData(json.data);
+      } else {
+        throw new Error(json.warning || "Invalid response format");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error fetching weather";
+      setError(msg);
+      console.error("Weather fetch error:", msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch on mount
+    fetchWeatherData();
+
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchWeatherData, 1000 * 60 * 5);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -97,10 +143,22 @@ export default function HeroSection() {
                 <p className="text-blue-200 text-xs">Update: {currentTime || weatherData.updated}</p>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-green-300 text-xs">Live</span>
+                {loading ? (
+                  <Loader size={14} className="text-blue-300 animate-spin" />
+                ) : (
+                  <>
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                    <span className="text-green-300 text-xs">Live</span>
+                  </>
+                )}
               </div>
             </div>
+
+            {error && (
+              <div className="bg-red-500/20 border border-red-400/50 rounded-lg p-2 mb-3 text-red-200 text-xs">
+                {error}
+              </div>
+            )}
 
             <div className="flex items-center gap-4 mb-5">
               <div className="flex flex-col items-center">

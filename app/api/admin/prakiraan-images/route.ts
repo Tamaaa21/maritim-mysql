@@ -74,6 +74,10 @@ export async function POST(req: Request) {
 
     if (uploadError) throw uploadError;
 
+    if (!uploadData || !uploadData.path) {
+      throw new Error('Upload succeeded but returned no path');
+    }
+
     const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(uploadData.path);
     const publicUrl = (urlData as any)?.publicUrl || '';
 
