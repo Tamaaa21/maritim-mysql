@@ -42,11 +42,21 @@ const FALLBACK_DATA: WeatherData = {
   updated: new Date().toISOString(),
 };
 
+function formatUpdated(updated: string | undefined) {
+  try {
+    if (!updated) return '';
+    return new Date(updated).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+  } catch {
+    return String(updated || '');
+  }
+}
+
 export default function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
   const [weatherData, setWeatherData] = useState<WeatherData>(FALLBACK_DATA);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // Fetch weather data from API
   const fetchWeatherData = async () => {
@@ -77,6 +87,11 @@ export default function HeroSection() {
     // Refresh every 5 minutes
     const interval = setInterval(fetchWeatherData, 1000 * 60 * 5);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
   }, []);
 
   useEffect(() => {
@@ -140,7 +155,9 @@ export default function HeroSection() {
             <div className="flex items-center justify-between mb-4 border-b border-white/20 pb-3">
               <div>
                 <p className="text-white font-semibold text-sm">{weatherData.city}</p>
-                <p className="text-blue-200 text-xs">Update: {currentTime || weatherData.updated}</p>
+                <p className="text-blue-200 text-xs">
+                  Update: {mounted ? (currentTime || formatUpdated(weatherData.updated)) : '—'}
+                </p>
               </div>
               <div className="flex items-center gap-1">
                 {loading ? (
