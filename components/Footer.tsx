@@ -20,8 +20,7 @@ export default function Footer() {
     <footer
       className="relative bg-[#001a55] text-white overflow-hidden"
       style={{
-        backgroundImage: `url('https://images.pexels.com/photos/1001682/pexels-photo-1001682.jpeg?auto=compress&cs=tinysrgb&w=1600')`,
-        backgroundSize: "cover",
+        backgroundColor: "#001a55",
         backgroundPosition: "center bottom",
       }}
     >
@@ -34,7 +33,7 @@ export default function Footer() {
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-              <img src="bmkg-logo.png" alt="B" className="w-full h-full object-contain p-1" />
+                  <img src="bmkg-logo.png" alt="B" className="w-full h-full object-contain p-1" />
                 </div>
                 <div>
                   <p className="font-bold text-sm leading-tight">STASIUN METEOROLOGI</p>
@@ -98,7 +97,7 @@ export default function Footer() {
                 </div>
               </div>
 
-            
+
             </div>
           </div>
 

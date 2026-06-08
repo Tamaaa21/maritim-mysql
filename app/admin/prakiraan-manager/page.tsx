@@ -19,17 +19,30 @@ interface PrakiraanItem {
   uploader?: string;
 }
 
-const formatToDatetimeLocal = (isoString?: string) => {
+const formatToDateOnly = (isoString?: string) => {
   if (!isoString) return "";
   try {
     const date = new Date(isoString);
     if (isNaN(date.getTime())) return "";
     const pad = (num: number) => String(num).padStart(2, "0");
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   } catch (e) {
     return "";
   }
 };
+
+// Convert a YYYY-MM-DD string to end-of-day ISO string (23:59:59)
+const dateToEndOfDayISO = (dateStr: string) => {
+  if (!dateStr) return null;
+  try {
+    const date = new Date(dateStr + "T23:59:59");
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString();
+  } catch {
+    return null;
+  }
+};
+
 
 export default function PrakiraanManager() {
   const [items, setItems] = useState<PrakiraanItem[]>([]);
@@ -84,7 +97,7 @@ export default function PrakiraanManager() {
       title: item.title,
       url: item.url,
       explanation: item.explanation || "",
-      waktu_berakhir: item.waktu_berakhir ? formatToDatetimeLocal(item.waktu_berakhir) : "",
+      waktu_berakhir: item.waktu_berakhir ? formatToDateOnly(item.waktu_berakhir) : "",
     });
     setIsModalOpen(true);
   };
@@ -133,7 +146,7 @@ export default function PrakiraanManager() {
         form.append("explanation", editingEntry.explanation);
         form.append("uploader", username);
         if (editingEntry.waktu_berakhir) {
-          form.append("waktu_berakhir", new Date(editingEntry.waktu_berakhir).toISOString());
+          form.append("waktu_berakhir", dateToEndOfDayISO(editingEntry.waktu_berakhir) || "");
         }
 
         const res = await fetch("/api/admin/prakiraan-images", {
@@ -179,7 +192,7 @@ export default function PrakiraanManager() {
             title: editingEntry.title,
             url: finalUrl,
             explanation: editingEntry.explanation,
-            waktu_berakhir: editingEntry.waktu_berakhir ? new Date(editingEntry.waktu_berakhir).toISOString() : null,
+            waktu_berakhir: editingEntry.waktu_berakhir ? dateToEndOfDayISO(editingEntry.waktu_berakhir) : null,
             uploader: username,
           }),
         });
@@ -426,18 +439,18 @@ export default function PrakiraanManager() {
                 `}</style>
               </div>
 
-              {/* Waktu Berakhir */}
+              {/* Tanggal Berakhir */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Waktu Berakhir (Tanggal & Jam)</label>
+                <label className="block text-sm font-semibold text-gray-700">Tanggal Berakhir</label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={editingEntry.waktu_berakhir || ""}
                   onChange={(e) => setEditingEntry({ ...editingEntry, waktu_berakhir: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#003399] bg-white text-gray-900"
                   disabled={saving}
                 />
                 <p className="text-[11px] text-gray-400 mt-1">
-                  Kartu prakiraan ini akan otomatis disembunyikan dari halaman pengguna setelah waktu di atas tercapai. Kosongkan jika tidak berdurasi.
+                  Kartu prakiraan ini akan otomatis disembunyikan dari halaman pengguna setelah tanggal di atas. Kosongkan jika tidak berdurasi.
                 </p>
               </div>
             </div>
