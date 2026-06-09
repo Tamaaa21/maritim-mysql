@@ -9,55 +9,56 @@ const activities = [
     title: "Sosialisasi Info Cuaca Maritim",
     date: "12 Mei 2024",
     category: "Sosialisasi",
-    image: "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=600",
+    images: ["https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=600"],
   },
   {
     title: "Pengamatan Maritim di Perairan",
     date: "10 Mei 2024",
     category: "Pengamatan",
-    image: "https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=600",
+    images: ["https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=600"],
   },
   {
     title: "Kunjungan Tamu ke Stasiun",
     date: "8 Mei 2024",
     category: "Kunjungan",
-    image: "https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=600",
+    images: ["https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=600"],
   },
   {
     title: "Pemeliharaan Alat Observasi",
     date: "8 Mei 2024",
     category: "Lainnya",
-    image: "https://images.pexels.com/photos/3862130/pexels-photo-3862130.jpeg?auto=compress&cs=tinysrgb&w=600",
+    images: ["https://images.pexels.com/photos/3862130/pexels-photo-3862130.jpeg?auto=compress&cs=tinysrgb&w=600"],
   },
   {
     title: "Pemasangan AWS di Perairan",
     date: "5 Mei 2024",
     category: "Lainnya",
-    image: "https://images.pexels.com/photos/2422290/pexels-photo-2422290.jpeg?auto=compress&cs=tinysrgb&w=600",
+    images: ["https://images.pexels.com/photos/2422290/pexels-photo-2422290.jpeg?auto=compress&cs=tinysrgb&w=600"],
   },
   {
     title: "Pelatihan Internal Pegawai",
     date: "3 Mei 2024",
     category: "Lainnya",
-    image: "https://images.pexels.com/photos/3184325/pexels-photo-3184325.jpeg?auto=compress&cs=tinysrgb&w=600",
+    images: ["https://images.pexels.com/photos/3184325/pexels-photo-3184325.jpeg?auto=compress&cs=tinysrgb&w=600"],
   },
   {
     title: "Sosialisasi ke Nelayan",
     date: "30 Apr 2024",
     category: "Sosialisasi",
-    image: "https://images.pexels.com/photos/1007865/pexels-photo-1007865.jpeg?auto=compress&cs=tinysrgb&w=600",
+    images: ["https://images.pexels.com/photos/1007865/pexels-photo-1007865.jpeg?auto=compress&cs=tinysrgb&w=600"],
   },
   {
     title: "Pengamatan Pasang Surut",
     date: "28 Apr 2024",
     category: "Pengamatan",
-    image: "https://images.pexels.com/photos/1430675/pexels-photo-1430675.jpeg?auto=compress&cs=tinysrgb&w=600",
+    images: ["https://images.pexels.com/photos/1430675/pexels-photo-1430675.jpeg?auto=compress&cs=tinysrgb&w=600"],
   },
 ];
 
 export default function KegiatanSection({ limit }: { limit?: number }) {
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [lightbox, setLightbox] = useState<null | any>(null);
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
   const [items, setItems] = useState<any[]>([]);
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
           date: d.event_date ? new Date(d.event_date).toLocaleDateString('id-ID') : (new Date(d.created_at).toLocaleDateString('id-ID')),
           category: d.category || 'Lainnya',
           image: d.url,
+          images: (d.image_urls && d.image_urls.length > 0) ? d.image_urls : [d.url],
           description: d.description || '',
         }));
         setItems(data);
@@ -98,10 +100,10 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
             <div
               key={i}
               className="relative rounded-xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-lg transition-all duration-300 w-full sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] h-56 md:h-64"
-              onClick={() => setLightbox(item)}
+              onClick={() => { setLightbox(item); setLightboxImageIndex(0); }}
             >
               <img
-                src={item.image}
+                src={item.images?.[0] || item.image}
                 alt={item.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -154,10 +156,29 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
               onClick={(e) => e.stopPropagation()}
             >
               <img 
-                src={lightbox.image} 
+                src={lightbox.images?.[lightboxImageIndex] || lightbox.image} 
                 alt={lightbox.title} 
                 className="max-w-full max-h-[45vh] md:max-h-[85vh] object-contain rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.6)] border border-white/10" 
               />
+              {(lightbox.images?.length || 1) > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setLightboxImageIndex(i => (i - 1 + lightbox.images.length) % lightbox.images.length); }}
+                    className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all backdrop-blur-sm border border-white/10 text-xs"
+                  >
+                    Prev
+                  </button>
+                  <span className="text-white/70 text-xs">
+                    {lightboxImageIndex + 1} / {lightbox.images.length}
+                  </span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setLightboxImageIndex(i => (i + 1) % lightbox.images.length); }}
+                    className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all backdrop-blur-sm border border-white/10 text-xs"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

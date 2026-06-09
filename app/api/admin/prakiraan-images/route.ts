@@ -80,6 +80,8 @@ export async function POST(req: Request) {
       if (nextWaktuBerakhir) insertObj.next_waktu_berakhir = nextWaktuBerakhir;
       if (displayType && VALID_DISPLAY_TYPES.includes(displayType)) insertObj.display_type = displayType;
       if (galleryImages) insertObj.gallery_images = galleryImages;
+      if (body.slug) insertObj.slug = body.slug;
+      if (body.category_id) insertObj.category_id = body.category_id;
 
       const { data: insertData, error: insertError } = await supabase.from('prakiraan_images').insert(insertObj).select().single();
       if (insertError) throw insertError;
@@ -112,7 +114,11 @@ export async function POST(req: Request) {
       nextPublicUrl = await uploadFile('nextFile');
     }
 
-    const insertObj: any = { title, url: publicUrl };
+    const slug = (form.get('slug') as any)?.toString() || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const categoryId = (form.get('category_id') as any)?.toString() || null;
+
+    const insertObj: any = { title, url: publicUrl, slug };
+    if (categoryId) insertObj.category_id = categoryId;
     if (explanation) insertObj.explanation = explanation;
     if (uploader) insertObj.uploader = uploader;
     if (waktuBerakhir) insertObj.waktu_berakhir = waktuBerakhir;
@@ -153,7 +159,7 @@ export async function GET(req: Request) {
 
     const supabase = createClient(url, serviceKey as string);
 
-    let query = supabase.from("prakiraan_images").select("*");
+    let query = supabase.from("prakiraan_images").select(`*, category:category_id(*)`);
 
     const nowStr = new Date().toISOString();
 

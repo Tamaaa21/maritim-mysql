@@ -4,164 +4,99 @@ import { ChevronRight, MapPin, Anchor, Waves, TrendingUp, Sun, X, AlertCircle } 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const defaultForecastCards = [
-  {
-    id: null,
-    title: "Prakiraan Cuaca Kota",
-    desc: "Prakiraan cuaca untuk wilayah kota di sekitar Tegal",
-    image: "https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=600",
-    icon: MapPin,
-    color: "from-blue-900/80",
-    created_at: null,
-    waktu_berakhir: null,
-  },
-  {
-    id: null,
-    title: "Prakiraan Cuaca Pelabuhan",
-    desc: "Informasi khusus untuk pelabuhan di Tegal",
-    image: "https://images.pexels.com/photos/753331/pexels-photo-753331.jpeg?auto=compress&cs=tinysrgb&w=600",
-    icon: Anchor,
-    color: "from-teal-900/80",
-    created_at: null,
-    waktu_berakhir: null,
-  },
-  {
-    id: null,
-    title: "Prakiraan Cuaca Maritim",
-    desc: "Prakiraan cuaca maritim untuk keselamatan pelayaran",
-    image: "https://images.pexels.com/photos/1001682/pexels-photo-1001682.jpeg?auto=compress&cs=tinysrgb&w=600",
-    icon: Waves,
-    color: "from-cyan-900/80",
-    created_at: null,
-    waktu_berakhir: null,
-  },
-  {
-    id: null,
-    title: "Informasi Pasang Surut / Wisata Bahari",
-    desc: "Informasi pasang surut dan kondisi wisata bahari",
-    image: "https://images.pexels.com/photos/1430676/pexels-photo-1430676.jpeg?auto=compress&cs=tinysrgb&w=600",
-    icon: TrendingUp,
-    color: "from-sky-900/80",
-    created_at: null,
-    waktu_berakhir: null,
-  },
-];
-
-const getCardConfig = (title: string) => {
-  const t = title.toLowerCase();
-  if (t.includes("kota") || t.includes("wilayah") || t.includes("darat")) {
-    return { icon: MapPin, color: "from-blue-900/80" };
-  }
-  if (t.includes("pelabuhan") || t.includes("pantai") || t.includes("dermaga") || t.includes("pelaut")) {
-    return { icon: Anchor, color: "from-teal-900/80" };
-  }
-  if (t.includes("maritim") || t.includes("laut") || t.includes("gelombang") || t.includes("perairan")) {
-    return { icon: Waves, color: "from-cyan-900/80" };
-  }
-  if (t.includes("pasang") || t.includes("surut") || t.includes("wisata") || t.includes("bahari")) {
-    return { icon: TrendingUp, color: "from-sky-900/80" };
-  }
-  return { icon: Sun, color: "from-indigo-900/80" };
+const CATEGORY_ICONS: Record<string, any> = {
+  MapPin, Anchor, Waves, TrendingUp, Sun,
 };
 
-// Popup shown when user clicks an expired or scheduled card
-function ExpiredPopup({ title, onClose, isScheduled }: { title: string; onClose: () => void; isScheduled?: boolean }) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-center">
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center ${isScheduled ? "bg-blue-100" : "bg-amber-100"}`}>
-            <AlertCircle size={28} className={isScheduled ? "text-blue-500" : "text-amber-500"} />
-          </div>
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-gray-900">{isScheduled ? "Belum Tersedia" : "Halaman Belum Diperbarui"}</h3>
-          <p className="text-gray-500 text-sm mt-2 leading-relaxed">
-            {isScheduled ? (
-              <>Informasi prakiraan <span className="font-semibold text-gray-700">"{title}"</span> belum mulai tayang. Silakan kembali lagi pada jadwal yang telah ditentukan.</>
-            ) : (
-              <>Informasi prakiraan <span className="font-semibold text-gray-700">"{title}"</span> sudah melewati masa tayang. Silakan kembali lagi nanti untuk informasi terbaru.</>
-            )}
-          </p>
-        </div>
-        <button
-          onClick={onClose}
-          className="w-full px-4 py-2.5 bg-[#003399] hover:bg-[#0044cc] text-white font-semibold rounded-xl transition-colors text-sm"
-        >
-          Mengerti
-        </button>
-      </div>
-    </div>
-  );
+function getIcon(name?: string) {
+  return CATEGORY_ICONS[name || "Sun"] || Sun;
 }
+
+const ExpiredPopup = ({ title, onClose, isScheduled }: { title: string; onClose: () => void; isScheduled?: boolean }) => (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+    onClick={onClose}
+  >
+    <div
+      className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex justify-center">
+        <div className={`w-14 h-14 rounded-full flex items-center justify-center ${isScheduled ? "bg-blue-100" : "bg-amber-100"}`}>
+          <AlertCircle size={28} className={isScheduled ? "text-blue-500" : "text-amber-500"} />
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-bold text-gray-900">{isScheduled ? "Belum Tersedia" : "Halaman Belum Diperbarui"}</h3>
+        <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+          {isScheduled ? (
+            <>Informasi prakiraan <span className="font-semibold text-gray-700">"{title}"</span> belum mulai tayang. Silakan kembali lagi pada jadwal yang telah ditentukan.</>
+          ) : (
+            <>Informasi prakiraan <span className="font-semibold text-gray-700">"{title}"</span> sudah melewati masa tayang. Silakan kembali lagi nanti untuk informasi terbaru.</>
+          )}
+        </p>
+      </div>
+      <button
+        onClick={onClose}
+        className="w-full px-4 py-2.5 bg-[#003399] hover:bg-[#0044cc] text-white font-semibold rounded-xl transition-colors text-sm"
+      >
+        Mengerti
+      </button>
+    </div>
+  </div>
+);
 
 export default function PrakiraanSection({ limit }: { limit?: number }) {
   const router = useRouter();
-  const [forecastCards, setForecastCards] = useState<any[]>(defaultForecastCards);
+  const [cards, setCards] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [expiredPopup, setExpiredPopup] = useState<{ title: string; isScheduled?: boolean } | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    async function fetchPrakiraan() {
+    async function fetchData() {
       try {
-        // Fetch all cards WITHOUT filtering expired — we want to show expired cards too
-        const res = await fetch("/api/admin/prakiraan-images");
-        const json = await res.json();
-        if (mounted && json?.success && Array.isArray(json.data)) {
-          if (json.data.length > 0) {
-            const now = new Date();
-            const mapped = json.data.map((it: any) => {
-              const { icon, color } = getCardConfig(it.title);
-              return {
-                id: it.id,
-                title: it.title,
-                desc: it.explanation || "",
-                image: it.url,
-                icon: icon,
-                color: color,
-                created_at: it.created_at || null,
-                waktu_mulai: it.waktu_mulai || null,
-                waktu_berakhir: it.waktu_berakhir || null,
-                next_url: it.next_url || null,
-                next_explanation: it.next_explanation || null,
-                next_waktu_mulai: it.next_waktu_mulai || null,
-                next_waktu_berakhir: it.next_waktu_berakhir || null,
-                display_type: it.display_type || "gambar_saja",
-                gallery_images: it.gallery_images || [],
-              };
-            });
-            setForecastCards(mapped);
-          } else {
-            setForecastCards([]);
+        const [cardsRes, catRes] = await Promise.all([
+          fetch("/api/admin/prakiraan-images"),
+          fetch("/api/admin/prakiraan-categories"),
+        ]);
+        const cardsJson = await cardsRes.json();
+        const catJson = await catRes.json();
+        if (mounted) {
+          if (cardsJson?.success && Array.isArray(cardsJson.data)) {
+            setCards(cardsJson.data);
+          }
+          if (catJson?.success && Array.isArray(catJson.data)) {
+            setCategories(catJson.data);
           }
         }
       } catch (e) {
-        console.error("Error fetching forecast:", e);
+        console.error("Error fetching data:", e);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
-    fetchPrakiraan();
-    return () => {
-      mounted = false;
-    };
+    fetchData();
+    return () => { mounted = false; };
   }, []);
 
+  const now = new Date();
+  const isAvailable = (card: any) => {
+    const expired = card.waktu_berakhir && new Date(card.waktu_berakhir) < now;
+    const scheduled = !expired && card.waktu_mulai && new Date(card.waktu_mulai) > now;
+    return !expired && !scheduled;
+  };
+
+  const visibleCards = cards.filter((card) => {
+    if (!activeCategory) return isAvailable(card);
+    return card.category_id === activeCategory && isAvailable(card);
+  });
+
   const handleCardClick = (card: any) => {
-    const now = new Date();
-    const isExpired = card.waktu_berakhir && new Date(card.waktu_berakhir) < now;
-    const isScheduled = card.waktu_mulai && new Date(card.waktu_mulai) > now;
-    if (isExpired || isScheduled) {
-      setExpiredPopup({ title: card.title, isScheduled });
-    } else if (card.id) {
-      router.push(`/prakiraan/${card.id}`);
+    if (card.slug) {
+      router.push(`/prakiraan/${card.slug}`);
     } else {
       setExpiredPopup({ title: card.title });
     }
@@ -170,87 +105,97 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
   return (
     <section id="prakiraan" className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 md:px-16">
-        {/* Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">Informasi Prakiraan</h2>
           <p className="text-gray-500 mt-2">Pilih kategori informasi prakiraan yang Anda butuhkan</p>
         </div>
 
-        {/* 4-column Responsive Grid for Forecast Cards */}
+        {/* Category Filter Tabs */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-2 mb-10">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                !activeCategory
+                  ? "bg-[#003399] text-white shadow-md"
+                  : "bg-white text-gray-600 border border-gray-200 hover:border-[#003399] hover:text-[#003399]"
+              }`}
+            >
+              Semua
+            </button>
+            {categories.map((cat) => {
+              const Icon = getIcon(cat.icon);
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                    activeCategory === cat.id
+                      ? "bg-[#003399] text-white shadow-md"
+                      : "bg-white text-gray-600 border border-gray-200 hover:border-[#003399] hover:text-[#003399]"
+                  }`}
+                >
+                  <Icon size={14} />
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {loading ? (
           <div className="py-12 flex justify-center">
             <div className="w-10 h-10 border-4 border-[#003399] border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : forecastCards.length === 0 ? (
+        ) : visibleCards.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm w-full">
             <p className="text-gray-500 font-medium text-sm">Tidak ada informasi prakiraan cuaca saat ini.</p>
           </div>
         ) : (
           <div className="flex flex-wrap justify-center items-stretch gap-6">
-            {(limit ? forecastCards.slice(0, limit) : forecastCards).map((card, i) => {
-              const Icon = card.icon;
-              const now = new Date();
-              const isExpired = card.waktu_berakhir && new Date(card.waktu_berakhir) < now;
-              const isScheduled = !isExpired && card.waktu_mulai && new Date(card.waktu_mulai) > now;
-              const isUnavailable = isExpired || isScheduled;
-              const isActive = !isUnavailable;
+            {(limit ? visibleCards.slice(0, limit) : visibleCards).map((card, i) => {
+              const CategoryIcon = getIcon(card.category?.icon);
               return (
                 <button
-                  key={i}
+                  key={card.id || i}
                   onClick={() => handleCardClick(card)}
-                  className={`w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group flex flex-col text-left h-full relative ${
-                    isUnavailable
-                      ? "border-gray-200 opacity-75 hover:opacity-100"
-                      : "border-gray-200 hover:border-[#003399]"
-                  }`}
+                  className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-[#003399] transition-all duration-300 group flex flex-col text-left h-full relative"
                 >
-                  {/* Unavailable badge */}
-                  {isExpired && (
-                    <span className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                      Belum Diperbarui
-                    </span>
-                  )}
-                  {isScheduled && (
-                    <span className="absolute top-3 left-3 z-10 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                      Terjadwal
-                    </span>
-                  )}
-
                   <div className="relative h-44 w-full overflow-hidden flex-shrink-0">
                     <img
-                      src={card.image}
+                      src={card.url}
                       alt={card.title}
-                      className={`w-full h-full object-cover transition-transform duration-500 ${isUnavailable ? "" : "group-hover:scale-105"}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${card.color} to-transparent ${isUnavailable ? "opacity-80" : "opacity-65"}`} />
-                    {isUnavailable && (
-                      <div className="absolute inset-0 bg-gray-900/20" />
-                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-60" />
                     <div className="absolute top-4 left-4 w-9 h-9 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white">
-                      <Icon size={18} />
+                      <CategoryIcon size={18} />
                     </div>
+                    {card.category && (
+                      <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md rounded-full px-2.5 py-0.5 text-white text-[10px] font-semibold">
+                        {card.category.name}
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className={`font-bold text-sm md:text-base mb-2 leading-snug line-clamp-2 transition-colors ${isUnavailable ? "text-gray-500" : "text-gray-900 group-hover:text-[#003399]"}`}>
+                      <h3 className="font-bold text-sm md:text-base mb-2 leading-snug line-clamp-2 text-gray-900 group-hover:text-[#003399] transition-colors">
                         {card.title}
                       </h3>
                       <p className="text-gray-500 text-xs leading-relaxed line-clamp-3">
-                        {card.desc ? card.desc.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ') : ""}
+                        {card.explanation ? card.explanation.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ') : ""}
                       </p>
-
-                      {/* Next Forecast Badge */}
-                      {card.next_url && isActive && (
+                      {card.next_url && (
                         <div className="mt-3 flex items-center gap-2 text-[10px] text-blue-600 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse inline-block flex-shrink-0" />
                           <span className="font-medium">Prakiraan berikutnya tersedia</span>
                         </div>
                       )}
                     </div>
-                    <div className={`mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-semibold ${isUnavailable ? "text-amber-500" : "text-[#003399]"}`}>
-                      <span>{isExpired ? "Belum Diperbarui" : isScheduled ? "Akan Datang" : "Lihat Detail"}</span>
-                      <ChevronRight size={14} className={isUnavailable ? "" : "group-hover:translate-x-1 transition-transform"} />
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-[#003399]">
+                      <span>Lihat Detail</span>
+                      <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </button>
@@ -259,7 +204,6 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
           </div>
         )}
 
-        {/* Selanjutnya */}
         {limit && (
           <div className="mt-10 text-center">
             <a
@@ -272,10 +216,10 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
         )}
       </div>
 
-      {/* Expired Popup */}
       {expiredPopup && (
         <ExpiredPopup
           title={expiredPopup.title}
+          isScheduled={expiredPopup.isScheduled}
           onClose={() => setExpiredPopup(null)}
         />
       )}

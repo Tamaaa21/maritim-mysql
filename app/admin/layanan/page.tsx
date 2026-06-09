@@ -10,6 +10,7 @@ interface LayananCard {
   nama_layanan: string;
   deskripsi: string;
   url_google_form: string | null;
+  cover_url: string | null;
   created_at: string;
 }
 
@@ -42,6 +43,9 @@ export default function LayananAdminPage() {
   const [deskripsi, setDeskripsi] = useState("");
   const [urlGoogleForm, setUrlGoogleForm] = useState("");
   const [saving, setSaving] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string>("");
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   useEffect(() => {
     fetchServices();
@@ -79,6 +83,8 @@ export default function LayananAdminPage() {
     setNamaLayanan("");
     setDeskripsi("");
     setUrlGoogleForm("");
+    setCoverFile(null);
+    setCoverPreview("");
     setIsModalOpen(true);
   };
 
@@ -88,6 +94,8 @@ export default function LayananAdminPage() {
     setNamaLayanan(svc.nama_layanan);
     setDeskripsi(svc.deskripsi || "");
     setUrlGoogleForm(svc.url_google_form || "");
+    setCoverFile(null);
+    setCoverPreview(svc.cover_url || "");
     setIsModalOpen(true);
   };
 
@@ -111,6 +119,15 @@ export default function LayananAdminPage() {
     }
   };
 
+  const uploadCoverImage = async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: form });
+    const json = await res.json();
+    if (json?.success && json.url) return json.url;
+    throw new Error(json?.message || "Upload cover gagal");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!namaLayanan.trim()) {
@@ -120,6 +137,13 @@ export default function LayananAdminPage() {
 
     setSaving(true);
     try {
+      let coverUrl = coverPreview || null;
+      if (coverFile) {
+        setUploadingCover(true);
+        coverUrl = await uploadCoverImage(coverFile);
+        setUploadingCover(false);
+      }
+
       if (modalMode === "add") {
         const res = await fetch("/api/admin/layanan-cards", {
           method: "POST",
@@ -128,6 +152,7 @@ export default function LayananAdminPage() {
             nama_layanan: namaLayanan,
             deskripsi: deskripsi || null,
             url_google_form: urlGoogleForm || null,
+            cover_url: coverUrl,
           }),
         });
         const json = await res.json();
@@ -146,6 +171,7 @@ export default function LayananAdminPage() {
             nama_layanan: namaLayanan,
             deskripsi: deskripsi,
             url_google_form: urlGoogleForm,
+            cover_url: coverUrl,
           }),
         });
         const json = await res.json();
@@ -162,6 +188,7 @@ export default function LayananAdminPage() {
       alert("Terjadi kesalahan saat menyimpan data");
     } finally {
       setSaving(false);
+      setUploadingCover(false);
     }
   };
 
@@ -213,6 +240,7 @@ export default function LayananAdminPage() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Sampul</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Nama Layanan</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Deskripsi Singkat</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Tautan Google Form</th>
@@ -222,6 +250,13 @@ export default function LayananAdminPage() {
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-5">
+                      {item.cover_url ? (
+                        <img src={item.cover_url} alt="Cover" className="w-16 h-10 object-cover rounded" />
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">Tidak ada</span>
+                      )}
+                    </td>
                     <td className="px-6 py-5 text-sm font-semibold text-gray-900 leading-snug">
                       {item.nama_layanan}
                     </td>
@@ -335,6 +370,39 @@ export default function LayananAdminPage() {
                 />
                 <p className="text-xs text-gray-400 mt-1">
                   Jika dikosongkan, pengguna akan melihat pesan pemberitahuan bahwa halaman belum diperbarui saat mengklik kartu.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Gambar Sampul
+                </label>
+                {coverPreview && (
+                  <div className="relative w-full h-32 mb-2 rounded-lg overflow-hidden border">
+                    <img src={coverPreview} alt="Cover preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => { setCoverFile(null); setCoverPreview(""); }}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setCoverFile(f);
+                      setCoverPreview(URL.createObjectURL(f));
+                    }
+                  }}
+                  className="rounded-lg border-gray-200 focus-visible:ring-[#003399]"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Upload gambar sampul untuk kartu layanan. Ukuran optimal: 600x400px.
                 </p>
               </div>
 

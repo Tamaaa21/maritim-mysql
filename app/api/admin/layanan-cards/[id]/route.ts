@@ -40,11 +40,12 @@ export async function PATCH(req: Request, context: any) {
 
     const supabase = createClient(url, serviceKey);
 
-    const { nama_layanan, deskripsi, url_google_form } = body;
+    const { nama_layanan, deskripsi, url_google_form, cover_url } = body;
     const updateObj: any = {};
     if (nama_layanan !== undefined) updateObj.nama_layanan = nama_layanan;
     if (deskripsi !== undefined) updateObj.deskripsi = deskripsi;
     if (url_google_form !== undefined) updateObj.url_google_form = url_google_form || null;
+    if (cover_url !== undefined) updateObj.cover_url = cover_url || null;
     updateObj.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase

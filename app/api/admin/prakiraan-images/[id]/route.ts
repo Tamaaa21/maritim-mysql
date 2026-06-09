@@ -12,7 +12,7 @@ export async function GET(req: Request, context: any) {
     if (!url || !serviceKey) return NextResponse.json({ success: false }, { status: 500 });
     const supabase = createClient(url, serviceKey as string);
 
-    const { data, error } = await supabase.from("prakiraan_images").select("*").eq("id", id).single();
+    const { data, error } = await supabase.from("prakiraan_images").select(`*, category:category_id(*)`).eq("id", id).single();
     if (error) throw error;
     if (!data) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
     return NextResponse.json({ success: true, data });

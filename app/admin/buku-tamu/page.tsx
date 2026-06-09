@@ -36,6 +36,7 @@ export default function BukuTamuPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState<BukuTamuEntry | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -79,6 +80,8 @@ export default function BukuTamuPage() {
     const doc = new jsPDF();
     doc.setFontSize(14);
     doc.text("Laporan Buku Tamu - Stasiun Meteorologi Maritim Tegal", 14, 20);
+    doc.setFontSize(8);
+    doc.text(`Diekspor: ${new Date().toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 27);
     
     const tableColumn = ["No", "Nama", "Email", "Telepon", "Instansi", "Keperluan", "Tanggal"];
     const tableRows: any[] = [];
@@ -99,13 +102,84 @@ export default function BukuTamuPage() {
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 30,
+      startY: 32,
       theme: 'grid',
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [0, 51, 153] }
+      styles: { fontSize: 7 },
+      headStyles: { fillColor: [0, 51, 153] },
+      didDrawPage: (data) => {
+        doc.setFontSize(6);
+        doc.text("Halaman " + String(data.pageNumber), doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10);
+      },
     });
 
+    // Add photos on separate pages
+    const hasPhoto = filtered.filter(item => item.foto_data);
+    if (hasPhoto.length > 0) {
+      for (const item of hasPhoto) {
+        try {
+          doc.addPage();
+          doc.setFontSize(12);
+          doc.text(`Foto - ${item.nama}`, 14, 20);
+          doc.setFontSize(9);
+          doc.text(`Email: ${item.email} | Tanggal: ${new Date(item.created_at).toLocaleDateString("id-ID")}`, 14, 28);
+          
+          if (item.foto_data) {
+            const imgData = item.foto_data.startsWith('data:') ? item.foto_data : `data:image/jpeg;base64,${item.foto_data}`;
+            doc.addImage(imgData, 'JPEG', 14, 35, 80, 80);
+          }
+        } catch (e) {
+          console.error("Gagal menambahkan foto ke PDF:", e);
+        }
+      }
+    }
+
     doc.save(`Buku_Tamu_${new Date().toISOString().slice(0,10)}.pdf`);
+  };
+
+  const handleBackup = async () => {
+    try {
+      const res = await fetch("/api/admin/buku-tamu/backup");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `buku_tamu_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert("Gagal melakukan backup");
+    }
+  };
+
+  const handleRestore = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!confirm(`Restore data dari file ${file.name}? Data akan ditambahkan ke database.`)) return;
+
+    setRestoring(true);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const res = await fetch("/api/admin/buku-tamu/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (json?.success) {
+        alert(json.message || "Restore berhasil");
+        fetchData();
+      } else {
+        alert(json?.message || "Restore gagal");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("File backup tidak valid");
+    } finally {
+      setRestoring(false);
+    }
+    e.target.value = "";
   };
 
   return (
@@ -121,12 +195,26 @@ export default function BukuTamuPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari berdasarkan nama, email, atau telepon..." className="pl-12 text-sm" />
         </div>
-        <button
-          onClick={handleExportPDF}
-          className="flex items-center gap-2 bg-[#003399] hover:bg-[#0044cc] text-white px-4 py-2.5 rounded-lg font-semibold transition-colors w-full sm:w-auto text-sm shadow-sm"
-        >
-          <Download size={18} /> Cetak PDF
-        </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 bg-[#003399] hover:bg-[#0044cc] text-white px-4 py-2.5 rounded-lg font-semibold transition-colors text-sm shadow-sm"
+          >
+            <Download size={18} /> Cetak PDF
+          </button>
+          <button
+            onClick={handleBackup}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors text-sm shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Backup
+          </button>
+          <label className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-colors text-sm shadow-sm cursor-pointer ${restoring ? "bg-gray-400" : "bg-amber-600 hover:bg-amber-700"} text-white`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            {restoring ? "Memulihkan..." : "Restore"}
+            <input type="file" accept=".json" onChange={handleRestore} className="hidden" disabled={restoring} />
+          </label>
+        </div>
       </div>
 
       {/* Table */}

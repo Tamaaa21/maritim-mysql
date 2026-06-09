@@ -21,6 +21,7 @@ interface LayananCard {
   nama_layanan: string;
   deskripsi: string;
   url_google_form: string | null;
+  cover_url?: string | null;
 }
 
 const getServiceConfig = (title: string) => {
@@ -176,6 +177,8 @@ export default function LayananSection({ limit }: { limit?: number }) {
             {(limit ? services.slice(0, limit) : services).map((svc) => {
               const { Icon, bg, iconColor, accent, badgeText, coverImage } = getServiceConfig(svc.nama_layanan);
 
+              const imgSrc = svc.cover_url || coverImage;
+
               return (
                 <button
                   key={svc.id}
@@ -185,7 +188,7 @@ export default function LayananSection({ limit }: { limit?: number }) {
                   {/* Top: Cover Image with Overlays */}
                   <div className="relative w-full h-36 overflow-hidden shrink-0">
                     <img 
-                      src={coverImage} 
+                      src={imgSrc} 
                       alt={svc.nama_layanan} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                     />

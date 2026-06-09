@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     const supabase = createClient(url, serviceKey);
     const body = await req.json();
-    const { nama_layanan, deskripsi, url_google_form } = body;
+    const { nama_layanan, deskripsi, url_google_form, cover_url } = body;
 
     if (!nama_layanan) {
       return NextResponse.json({ success: false, message: "Nama layanan wajib diisi" }, { status: 400 });
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
         nama_layanan,
         deskripsi: deskripsi || null,
         url_google_form: url_google_form || null,
+        cover_url: cover_url || null,
       })
       .select()
       .single();

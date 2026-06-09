@@ -22,7 +22,7 @@ function isAdmin() {
 export default function KegiatanManager() {
   const [items, setItems] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
@@ -42,21 +42,22 @@ export default function KegiatanManager() {
   useEffect(() => { fetchItems(); }, []);
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
     setUploading(true);
     try {
       const form = new FormData();
-      form.append('file', file);
-      form.append('title', title || file.name);
+      for (const f of files) form.append('files', f);
+      form.append('title', title || files[0].name);
       if (description) form.append('description', description);
       if (eventDate) form.append('event_date', eventDate);
+      if (category) form.append('category', category);
       const res = await fetch('/api/admin/kegiatan-documents', { method: 'POST', body: form });
       const json = await res.json();
       if (json?.success) {
         setItems([json.data, ...items]);
-        setFile(null); setTitle(''); setDescription(''); setEventDate('');
+        setFiles([]); setTitle(''); setDescription(''); setEventDate(''); setCategory('');
       } else {
-        alert('Upload gagal');
+        alert('Upload gagal: ' + (json?.message || ''));
       }
     } catch (e) { console.error(e); alert('Upload error'); }
     setUploading(false);
@@ -103,20 +104,31 @@ export default function KegiatanManager() {
           <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} />
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-4 flex items-center gap-3 flex-wrap">
           <label className="inline-flex items-center gap-2 px-4 py-2 border border-dashed rounded-md cursor-pointer">
-            <Upload /> <span>{file ? file.name : 'Pilih file'}</span>
-            <input type="file" accept="image/*,application/pdf" onChange={e => setFile(e.target.files?.[0] || null)} className="hidden" />
+            <Upload /> <span>{files.length > 0 ? `${files.length} file dipilih` : 'Pilih file'}</span>
+            <input type="file" accept="image/*,application/pdf" multiple onChange={e => setFiles(Array.from(e.target.files || []))} className="hidden" />
           </label>
-          <button onClick={handleUpload} disabled={uploading || !file} className="px-4 py-2 bg-[#003399] text-white rounded-md">{uploading ? 'Mengupload...' : 'Upload'}</button>
+          {files.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {Array.from(files).map((f, i) => (
+                <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded">{f.name}</span>
+              ))}
+            </div>
+          )}
+          <button onClick={handleUpload} disabled={uploading || files.length === 0} className="px-4 py-2 bg-[#003399] text-white rounded-md">{uploading ? 'Mengupload...' : 'Upload'}</button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {items.map(item => (
           <div key={item.id} className="bg-white p-4 rounded-2xl border border-gray-100 flex gap-4 items-start">
-            <div style={{ width: 120, height: 80 }} className="flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
-              <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
+            <div className="flex-shrink-0 space-y-1">
+              {(item.image_urls && item.image_urls.length > 0 ? item.image_urls : [item.url]).map((url: string, i: number) => (
+                <div key={i} style={{ width: 80, height: 60 }} className="overflow-hidden rounded-md bg-gray-100">
+                  <img src={url} alt={item.title} className="w-full h-full object-cover" />
+                </div>
+              ))}
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start">

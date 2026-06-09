@@ -11,49 +11,55 @@ export async function POST(req: Request) {
     const supabase = createClient(url, serviceKey as string);
 
     const form = await (req as any).formData();
-    const file = form.get("file") as any;
-    const title = (form.get("title") as any)?.toString() || file?.name || `kegiatan-${Date.now()}`;
+    const files = form.getAll("files") as any[];
+    const singleFile = form.get("file") as any;
+    const title = (form.get("title") as any)?.toString() || singleFile?.name || `kegiatan-${Date.now()}`;
     const description = (form.get("description") as any)?.toString() || null;
     const event_date = (form.get("event_date") as any)?.toString() || null;
     const category = (form.get("category") as any)?.toString() || null;
 
-    if (!file) return NextResponse.json({ success: false, message: "No file provided" }, { status: 400 });
+    const allFiles = files.length > 0 ? files : (singleFile ? [singleFile] : []);
+    if (allFiles.length === 0) return NextResponse.json({ success: false, message: "No file provided" }, { status: 400 });
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const filename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
     const bucket = process.env.SUPABASE_STORAGE_BUCKET || "public";
-    const path = `kegiatan/${filename}`;
 
-    let { data: uploadData, error: uploadError } = await supabase.storage.from(bucket).upload(path, buffer, {
-      contentType: file.type,
-      upsert: true,
-    });
+    const uploadFile = async (file: any) => {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const filename = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const path = `kegiatan/${filename}`;
 
-    if (uploadError) {
-      try {
-        await supabase.storage.createBucket(bucket, { public: true });
-        const retry = await supabase.storage.from(bucket).upload(path, buffer, {
-          contentType: file.type,
-          upsert: true,
-        });
-        uploadData = retry.data;
-        uploadError = retry.error;
-      } catch (bErr) {
-        console.error("Bucket create or retry failed", bErr);
+      let { data: uploadData, error: uploadError } = await supabase.storage.from(bucket).upload(path, buffer, {
+        contentType: file.type,
+        upsert: true,
+      });
+
+      if (uploadError) {
+        try {
+          await supabase.storage.createBucket(bucket, { public: true });
+          const retry = await supabase.storage.from(bucket).upload(path, buffer, {
+            contentType: file.type,
+            upsert: true,
+          });
+          uploadData = retry.data;
+          uploadError = retry.error;
+        } catch (bErr) {
+          console.error("Bucket create or retry failed", bErr);
+        }
       }
-    }
 
-    if (uploadError) throw uploadError;
+      if (uploadError) throw uploadError;
+      if (!uploadData || !uploadData.path) throw new Error('Upload succeeded but returned no path');
 
-    if (!uploadData || !uploadData.path) {
-      throw new Error('Upload succeeded but returned no path');
-    }
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(uploadData.path);
+      return { url: (urlData as any)?.publicUrl || "", path: uploadData.path, type: file.type };
+    };
 
-    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(uploadData.path);
-    const publicUrl = (urlData as any)?.publicUrl || "";
+    const uploaded = await Promise.all(allFiles.map(uploadFile));
+    const imageUrls = uploaded.map(u => u.url);
+    const firstFile = uploaded[0];
 
-    const insertObj: any = { title, url: publicUrl, file_path: uploadData.path, file_type: file.type };
+    const insertObj: any = { title, url: firstFile.url, file_path: firstFile.path, file_type: firstFile.type, image_urls: imageUrls };
     if (description) insertObj.description = description;
     if (event_date) insertObj.event_date = event_date;
     if (category) insertObj.category = category;
