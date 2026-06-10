@@ -83,7 +83,7 @@ export default function BukuTamuPage() {
     doc.setFontSize(8);
     doc.text(`Diekspor: ${new Date().toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 27);
     
-    const tableColumn = ["No", "Nama", "Email", "Telepon", "Instansi", "Keperluan", "Tanggal"];
+    const tableColumn = ["No", "Nama", "Email", "Telepon", "Instansi", "Keperluan", "Tanggal", "Foto"];
     const tableRows: any[] = [];
 
     filtered.forEach((item, index) => {
@@ -94,7 +94,8 @@ export default function BukuTamuPage() {
         item.no_telepon,
         item.instansi || "-",
         item.keperluan,
-        new Date(item.created_at).toLocaleDateString("id-ID")
+        new Date(item.created_at).toLocaleDateString("id-ID"),
+        "" // Placeholder for Foto column
       ];
       tableRows.push(rowData);
     });
@@ -104,34 +105,38 @@ export default function BukuTamuPage() {
       body: tableRows,
       startY: 32,
       theme: 'grid',
-      styles: { fontSize: 7 },
+      styles: { fontSize: 7, valign: 'middle' },
+      bodyStyles: { minCellHeight: 18 },
       headStyles: { fillColor: [0, 51, 153] },
+      columnStyles: {
+        7: { cellWidth: 18, halign: 'center' }
+      },
+      didDrawCell: (data) => {
+        if (data.section === 'body' && data.column.index === 7) {
+          const item = filtered[data.row.index];
+          if (item && item.foto_data) {
+            try {
+              const imgData = item.foto_data.startsWith('data:') 
+                ? item.foto_data 
+                : `data:image/jpeg;base64,${item.foto_data}`;
+              
+              const padding = 1.5;
+              const size = Math.min(data.cell.width, data.cell.height) - padding * 2;
+              const x = data.cell.x + (data.cell.width - size) / 2;
+              const y = data.cell.y + (data.cell.height - size) / 2;
+              
+              doc.addImage(imgData, 'JPEG', x, y, size, size);
+            } catch (e) {
+              console.error("Gagal menambahkan foto ke PDF:", e);
+            }
+          }
+        }
+      },
       didDrawPage: (data) => {
         doc.setFontSize(6);
         doc.text("Halaman " + String(data.pageNumber), doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10);
       },
     });
-
-    // Add photos on separate pages
-    const hasPhoto = filtered.filter(item => item.foto_data);
-    if (hasPhoto.length > 0) {
-      for (const item of hasPhoto) {
-        try {
-          doc.addPage();
-          doc.setFontSize(12);
-          doc.text(`Foto - ${item.nama}`, 14, 20);
-          doc.setFontSize(9);
-          doc.text(`Email: ${item.email} | Tanggal: ${new Date(item.created_at).toLocaleDateString("id-ID")}`, 14, 28);
-          
-          if (item.foto_data) {
-            const imgData = item.foto_data.startsWith('data:') ? item.foto_data : `data:image/jpeg;base64,${item.foto_data}`;
-            doc.addImage(imgData, 'JPEG', 14, 35, 80, 80);
-          }
-        } catch (e) {
-          console.error("Gagal menambahkan foto ke PDF:", e);
-        }
-      }
-    }
 
     doc.save(`Buku_Tamu_${new Date().toISOString().slice(0,10)}.pdf`);
   };

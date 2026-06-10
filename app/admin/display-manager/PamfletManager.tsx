@@ -8,7 +8,7 @@ function getUserRole(): string {
   try {
     const stored = typeof window !== "undefined" ? sessionStorage.getItem("adminUser") : null;
     if (stored) return JSON.parse(stored).role || "";
-  } catch {}
+  } catch { }
   return "";
 }
 
@@ -29,7 +29,7 @@ export default function PamfletManager() {
       const r = await fetch('/api/admin/pamflets');
       const j = await r.json();
       if (j?.success) setItems(j.data);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   useEffect(() => { fetchList(); }, []);
@@ -60,7 +60,7 @@ export default function PamfletManager() {
           if (!isNaN(endOfDay.getTime())) {
             form.append('waktu_berakhir', endOfDay.toISOString());
           }
-        } catch (e) {}
+        } catch (e) { }
       }
       const r = await fetch('/api/admin/pamflets', { method: 'POST', body: form });
       const j = await r.json();
@@ -70,7 +70,7 @@ export default function PamfletManager() {
         setWaktuBerakhir('');
         fetchList();
       }
-    } catch (e) {}
+    } catch (e) { }
     setLoading(false);
   };
 
@@ -104,28 +104,14 @@ export default function PamfletManager() {
 
         {/* Date + Upload Button Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div className="md:col-span-2 space-y-1.5">
-            <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-              <Calendar size={14} className="text-gray-500" />
-              Tanggal Berakhir (opsional)
-            </label>
-            <input
-              type="date"
-              value={waktuBerakhir}
-              onChange={(e) => setWaktuBerakhir(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#003399] bg-white text-gray-900"
-            />
-            <p className="text-[11px] text-gray-400">
-              Pamflet akan ditandai kadaluarsa setelah tanggal ini. Kosongkan jika tidak berbatas waktu.
-            </p>
-          </div>
+
 
           <button
             onClick={handleUpload}
             disabled={loading || (!file && !addingUrl)}
             className="px-6 py-2.5 bg-[#003399] hover:bg-[#0044cc] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors text-sm"
           >
-            {loading ? 'Mengunggah...' : 'Tambah Pamflet'}
+            {loading ? 'Mengunggah...' : 'Tambah Display'}
           </button>
         </div>
       </div>
@@ -134,7 +120,7 @@ export default function PamfletManager() {
       {items.length === 0 ? (
         <div className="text-center py-10 border border-dashed rounded-xl bg-gray-50">
           <AlertCircle className="mx-auto text-gray-400 mb-2" size={28} />
-          <p className="text-gray-500 text-sm">Belum ada pamflet yang diunggah.</p>
+          <p className="text-gray-500 text-sm">Belum ada Display yang diunggah.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -160,7 +146,7 @@ export default function PamfletManager() {
                   <button
                     className="absolute top-2 right-2 bg-black/60 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors opacity-0 group-hover:opacity-100"
                     onClick={() => handleDelete(it.id)}
-                    title="Hapus pamflet"
+                    title="Hapus Display"
                   >
                     <Trash size={12} />
                   </button>

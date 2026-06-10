@@ -9,7 +9,7 @@ export default function AboutPage() {
     <main>
       <Navbar />
       <div className="pt-0">
-        <AboutSection />
+        <AboutSection showExtras={false} />
       </div>
       <Footer />
     </main>
