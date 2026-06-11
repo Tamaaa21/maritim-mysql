@@ -113,32 +113,63 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
   }, []);
 
   const now = new Date();
-  const shouldShowCard = (card: any, allCards: any[]) => {
-    const expired = card.waktu_berakhir && new Date(card.waktu_berakhir) < now;
-    const scheduled = card.waktu_mulai && new Date(card.waktu_mulai) > now;
 
-    if (scheduled) {
-      return false; // Hide scheduled cards until they start
+  const isExpiredCard = (card: any) => card.waktu_berakhir && new Date(card.waktu_berakhir) < now;
+  const isScheduledCard = (card: any) => card.waktu_mulai && new Date(card.waktu_mulai) > now;
+  const isActiveCard = (card: any) => !isExpiredCard(card) && !isScheduledCard(card);
+
+  // For each category, find the ID of the single most recently updated expired card
+  // (used as fallback when there are no active cards in that category)
+  const latestExpiredPerCategory = (() => {
+    const map: Record<string, string> = {}; // categoryId -> cardId
+
+    // Get all expired cards grouped by category
+    const expiredCards = cards.filter(isExpiredCard);
+    for (const card of expiredCards) {
+      const catKey = card.category_id || "__none__";
+      // Check if there's already an active card in this category — if so, skip
+      const hasActive = cards.some(
+        (other) => other.category_id === card.category_id && isActiveCard(other)
+      );
+      if (hasActive) continue;
+
+      // Keep only the most recently updated/created expired card per category
+      if (!map[catKey]) {
+        map[catKey] = card.id;
+      } else {
+        const existingTime = new Date(
+          cards.find((c) => c.id === map[catKey])?.waktu_berakhir ||
+          cards.find((c) => c.id === map[catKey])?.created_at || 0
+        ).getTime();
+        const cardTime = new Date(card.waktu_berakhir || card.created_at || 0).getTime();
+        if (cardTime > existingTime) {
+          map[catKey] = card.id;
+        }
+      }
     }
+    return map;
+  })();
 
-    if (expired) {
-      // Retain expired card only if there is NO newer active/scheduled card in the same category
-      const hasNewer = allCards.some((other) => {
-        if (other.id === card.id) return false;
-        if (other.category_id !== card.category_id) return false;
-
-        const otherExpired = other.waktu_berakhir && new Date(other.waktu_berakhir) < now;
-        return !otherExpired; // true if the other card is active or scheduled
-      });
-      return !hasNewer;
-    }
-
-    return true; // Active card
+  const shouldShowCard = (card: any) => {
+    if (isScheduledCard(card)) return false;           // hide scheduled
+    if (isActiveCard(card)) return true;               // always show active
+    // Expired: only show if it's the single fallback card for its category
+    const catKey = card.category_id || "__none__";
+    return latestExpiredPerCategory[catKey] === card.id;
   };
 
   const visibleCards = cards.filter((card) => {
-    if (!activeCategory) return shouldShowCard(card, cards);
-    return card.category_id === activeCategory && shouldShowCard(card, cards);
+    if (!activeCategory) return shouldShowCard(card);
+    return card.category_id === activeCategory && shouldShowCard(card);
+  }).sort((a, b) => {
+    // Active cards first, then by latest time
+    const weightA = isActiveCard(a) ? 1 : 3;
+    const weightB = isActiveCard(b) ? 1 : 3;
+    if (weightA !== weightB) return weightA - weightB;
+
+    const timeA = new Date(a.waktu_mulai || a.created_at || 0).getTime();
+    const timeB = new Date(b.waktu_mulai || b.created_at || 0).getTime();
+    return timeB - timeA;
   });
 
   const handleCardClick = (card: any) => {

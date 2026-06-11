@@ -9,8 +9,8 @@ import { useEffect, useState } from "react";
 interface StrukturItem {
   id: string;
   jabatan: string;
-  nama: string;
-  inisial: string;
+  nama?: string;
+  inisial: string; // Used to store photo URL or initial
   deskripsi: string;
   urutan: number;
 }
@@ -79,11 +79,17 @@ export default function StrukturOrganisasiPage() {
                 {kepala && (
                   <div className="relative flex flex-col items-center">
                     <div className="bg-white border-2 border-[#003399] rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 w-72">
-                      <div className="w-16 h-16 mx-auto rounded-full bg-[#003399] text-white flex items-center justify-center font-bold text-xl mb-4 shadow-md uppercase">
-                        {kepala.inisial}
-                      </div>
+                      {kepala.inisial.startsWith("http") || kepala.inisial.startsWith("/") ? (
+                        <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 mb-4 shadow-md overflow-hidden border-2 border-[#003399]">
+                          <img src={kepala.inisial} alt={kepala.jabatan} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 mx-auto rounded-full bg-[#003399] text-white flex items-center justify-center font-bold text-2xl mb-4 shadow-md uppercase">
+                          {kepala.inisial}
+                        </div>
+                      )}
                       <h3 className="text-gray-900 font-bold text-lg">{kepala.jabatan}</h3>
-                      <p className="text-gray-500 text-sm mt-1 font-medium">{kepala.nama}</p>
+                      {kepala.nama && <p className="text-gray-500 text-sm mt-1 font-medium">{kepala.nama}</p>}
                       <span className="inline-block mt-3 px-3 py-1 bg-blue-50 text-[#003399] text-xs font-semibold rounded-full">
                         {kepala.deskripsi || "Pimpinan UPT"}
                       </span>
@@ -127,8 +133,9 @@ export default function StrukturOrganisasiPage() {
                 {/* Staff Sections (Level 2) */}
                 <div className={`grid grid-cols-1 ${
                   staff.length === 2 ? "md:grid-cols-2 max-w-3xl" : 
-                  staff.length >= 3 ? "md:grid-cols-3 max-w-5xl" : "md:grid-cols-1"
-                } gap-8 w-full mt-4 md:mt-0`}>
+                  staff.length === 3 ? "md:grid-cols-3 max-w-5xl" : 
+                  staff.length >= 4 ? "md:grid-cols-4 max-w-6xl" : "md:grid-cols-1"
+                } gap-6 w-full mt-4 md:mt-0`}>
                   
                   {staff.map((member) => {
                     // Predefined matching bg colors for O, D, P or fallback
@@ -145,11 +152,17 @@ export default function StrukturOrganisasiPage() {
                         className="bg-white border border-gray-150 rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col justify-between"
                       >
                         <div>
-                          <div className={`w-14 h-14 mx-auto rounded-full ${bgIconColor} text-white flex items-center justify-center font-bold text-lg mb-4 shadow-sm uppercase`}>
-                            {member.inisial}
-                          </div>
+                          {member.inisial.startsWith("http") || member.inisial.startsWith("/") ? (
+                            <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 mb-4 shadow-sm overflow-hidden border border-gray-200">
+                              <img src={member.inisial} alt={member.jabatan} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className={`w-16 h-16 mx-auto rounded-full ${bgIconColor} text-white flex items-center justify-center font-bold text-lg mb-4 shadow-sm uppercase`}>
+                              {member.inisial}
+                            </div>
+                          )}
                           <h4 className="text-gray-900 font-bold text-base">{member.jabatan}</h4>
-                          <p className="text-gray-500 text-sm mt-1">{member.nama}</p>
+                          {member.nama && <p className="text-gray-500 text-sm mt-1">{member.nama}</p>}
                         </div>
                         {member.deskripsi && (
                           <div className="mt-6 pt-4 border-t border-gray-50">

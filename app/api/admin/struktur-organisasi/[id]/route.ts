@@ -30,8 +30,8 @@ export async function PUT(req: Request, context: any) {
     const body = await req.json();
     const { jabatan, nama, inisial, deskripsi, urutan } = body;
 
-    if (!jabatan || !nama || !inisial) {
-      return NextResponse.json({ success: false, message: "Jabatan, nama, dan inisial wajib diisi" }, { status: 400 });
+    if (!jabatan || !inisial) {
+      return NextResponse.json({ success: false, message: "Jabatan dan inisial wajib diisi" }, { status: 400 });
     }
 
     if (url && serviceKey) {

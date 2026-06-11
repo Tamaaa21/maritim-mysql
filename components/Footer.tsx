@@ -96,7 +96,36 @@ export default function Footer() {
                   </div>
                 </div>
               </div>
-
+              <div>
+                <h4 className="text-white font-bold text-sm mb-3">Download Aplikasi Mobile</h4>
+                <p className="text-blue-300 text-xs mb-4">Unduh aplikasi info BMKG untuk informasi cuaca kapan saja, di mana saja.</p>
+                <div className="flex flex-col gap-2">
+                  <a
+                    href="#"
+                    className="flex items-center gap-3 bg-black/50 hover:bg-black/70 border border-white/20 rounded-xl px-4 py-2.5 transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white flex-shrink-0">
+                      <path d="M17.523 15.341c-.291.554-.432.795-.808 1.281-.524.687-1.264 1.542-2.184 1.549-.815.006-1.024-.527-2.13-.52-1.104.006-1.334.528-2.15.521-.919-.008-1.62-.81-2.145-1.497-1.469-1.92-1.625-4.164-.718-5.358.648-.852 1.664-1.35 2.62-1.35.978 0 1.595.528 2.404.528.788 0 1.268-.528 2.404-.528.854 0 1.765.416 2.41 1.136-.857.572-1.437 1.487-1.437 2.529 0 1.18.688 2.204 1.734 2.709zM14.337 5.2c.419-.521.737-1.258.622-2.014-.657.045-1.432.457-1.882 1.003-.408.493-.761 1.241-.627 1.975.718.023 1.471-.395 1.887-.964z" />
+                    </svg>
+                    <div>
+                      <p className="text-white/60 text-xs leading-none">Download on the</p>
+                      <p className="text-white font-bold text-sm leading-tight">App Store</p>
+                    </div>
+                  </a>
+                  <a
+                    href="#"
+                    className="flex items-center gap-3 bg-black/50 hover:bg-black/70 border border-white/20 rounded-xl px-4 py-2.5 transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white flex-shrink-0">
+                      <path d="M3.18 23.76c.28.17.6.24.93.22l12.34-7.01-2.65-2.65-10.62 9.44zM.5 1.48C.19 1.8 0 2.27 0 2.9v18.22c0 .63.19 1.1.5 1.42l.07.07 10.2-10.2v-.24L.57 1.41.5 1.48zM20.43 10.3l-2.9-1.65-2.96 2.96 2.96 2.96 2.91-1.65c.83-.47.83-1.24-.01-1.62zM4.11.24l12.34 7.01-2.65 2.65L3.18.24C3.51.02 3.84-.03 4.11.24z" />
+                    </svg>
+                    <div>
+                      <p className="text-white/60 text-xs leading-none">GET IT ON</p>
+                      <p className="text-white font-bold text-sm leading-tight">Google Play</p>
+                    </div>
+                  </a>
+                </div>
+              </div>
 
             </div>
           </div>

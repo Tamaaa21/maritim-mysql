@@ -5,11 +5,24 @@ import { Plus, Edit2, Trash2, HelpCircle, Network, ArrowLeft, Loader2, AlertCirc
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
+function getUserRole(): string {
+  try {
+    const stored = typeof window !== "undefined" ? sessionStorage.getItem("adminUser") : null;
+    if (stored) return JSON.parse(stored).role || "";
+  } catch {}
+  return "";
+}
+
+const isAdmin = () => {
+  const role = getUserRole();
+  return role === "admin" || role === "super_admin";
+};
+
 interface StrukturItem {
   id: string;
   jabatan: string;
-  nama: string;
-  inisial: string;
+  nama?: string;
+  inisial: string; // Used to store photo URL or initial
   deskripsi: string;
   urutan: number;
 }
@@ -18,6 +31,7 @@ export default function StrukturManagerPage() {
   const [items, setItems] = useState<StrukturItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   
   // Modal states
@@ -65,7 +79,7 @@ export default function StrukturManagerPage() {
   const handleOpenEdit = (item: StrukturItem) => {
     setEditingItem(item);
     setJabatan(item.jabatan);
-    setNama(item.nama);
+    setNama(item.nama || "");
     setInisial(item.inisial);
     setDeskripsi(item.deskripsi || "");
     setUrutan(item.urutan || 0);
@@ -73,12 +87,40 @@ export default function StrukturManagerPage() {
     setShowModal(true);
   };
 
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setInisial(data.url);
+      } else {
+        setError(data.message || "Gagal mengunggah foto");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Terjadi kesalahan saat mengunggah foto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
-    if (!jabatan || !nama || !inisial) {
-      setError("Jabatan, nama, dan inisial wajib diisi");
+    if (!jabatan || !inisial) {
+      setError("Jabatan dan foto/inisial wajib diisi");
       return;
     }
 
@@ -206,12 +248,16 @@ export default function StrukturManagerPage() {
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4 text-center font-bold text-slate-700">{item.urutan}</td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs uppercase ${badgeColor}`}>
-                          {item.inisial}
-                        </span>
+                        {item.inisial.startsWith("http") || item.inisial.startsWith("/") ? (
+                          <img src={item.inisial} alt={item.jabatan} className="w-8 h-8 rounded-full mx-auto object-cover border border-slate-200" />
+                        ) : (
+                          <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs uppercase ${badgeColor}`}>
+                            {item.inisial}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 font-bold text-slate-800">{item.jabatan}</td>
-                      <td className="px-6 py-4 text-slate-650">{item.nama}</td>
+                      <td className="px-6 py-4 text-slate-650">{item.nama || "-"}</td>
                       <td className="px-6 py-4 text-slate-450 text-xs hidden md:table-cell max-w-xs truncate" title={item.deskripsi}>
                         {item.deskripsi || "-"}
                       </td>
@@ -224,13 +270,15 @@ export default function StrukturManagerPage() {
                           >
                             <Edit2 size={16} />
                           </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-1.5 hover:bg-red-50 text-red-500 hover:text-red-700 rounded-lg transition-colors"
-                            title="Hapus Jabatan"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {isAdmin() && (
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="p-1.5 hover:bg-red-50 text-red-500 hover:text-red-700 rounded-lg transition-colors"
+                              title="Hapus Jabatan"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -277,28 +325,37 @@ export default function StrukturManagerPage() {
 
               {/* Row: Nama */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Nama Pejabat *</label>
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Nama Pejabat (Opsional)</label>
                 <Input
                   type="text"
                   value={nama}
                   onChange={(e) => setNama(e.target.value)}
                   placeholder="Contoh: Drs. Achmad Yani"
-                  required
                 />
               </div>
 
-              {/* Grid: Inisial & Urutan */}
+              {/* Grid: Inisial/Foto & Urutan */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Inisial Avatar *</label>
-                  <Input
-                    type="text"
-                    maxLength={2}
-                    value={inisial}
-                    onChange={(e) => setInisial(e.target.value)}
-                    placeholder="Contoh: O (1-2 huruf)"
-                    required
-                  />
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Foto atau Inisial *</label>
+                  <div className="flex gap-2 items-center">
+                    {inisial.startsWith("http") || inisial.startsWith("/") ? (
+                      <div className="relative w-10 h-10 shrink-0 rounded-full overflow-hidden border border-slate-200">
+                        <img src={inisial} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    ) : null}
+                    <Input
+                      type="text"
+                      value={inisial}
+                      onChange={(e) => setInisial(e.target.value)}
+                      placeholder="URL Foto atau Inisial (ex: O)"
+                      required
+                    />
+                    <label className={`shrink-0 flex items-center justify-center w-10 h-10 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                      {uploading ? <Loader2 size={16} className="animate-spin text-slate-500" /> : <Plus size={16} className="text-slate-500" />}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleUploadPhoto} />
+                    </label>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Urutan Hirarki *</label>

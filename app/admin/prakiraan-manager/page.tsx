@@ -860,7 +860,9 @@ export default function PrakiraanManager() {
                       <div className="flex gap-1">
                         <button onClick={() => { setCatForm({ id: cat.id, name: cat.name, description: cat.description || "", icon: cat.icon }); setShowCatForm(true); }}
                           className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"><Edit3 size={14} /></button>
-                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"><Trash2 size={14} /></button>
+                        {isAdmin() && (
+                          <button onClick={() => handleDeleteCategory(cat.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"><Trash2 size={14} /></button>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -1,8 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { LogIn, Clock, Search, ChevronLeft, ChevronRight, Download, Monitor, Globe } from "lucide-react";
+import { LogIn, Clock, Search, ChevronLeft, ChevronRight, Download, Monitor, Globe, Trash2, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
+
+function getUserRole(): string {
+  try {
+    const stored = typeof window !== "undefined" ? sessionStorage.getItem("adminUser") : null;
+    if (stored) return JSON.parse(stored).role || "";
+  } catch {}
+  return "";
+}
+
+const isAdmin = () => {
+  const role = getUserRole();
+  return role === "admin" || role === "super_admin";
+};
 
 interface LoginLog {
   id: string;
@@ -21,6 +34,7 @@ export default function LoginHistoryPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [restoring, setRestoring] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   const fetchLogs = async () => {
     try {
@@ -55,6 +69,24 @@ export default function LoginHistoryPage() {
     } catch (e) {
       console.error(e);
       alert("Gagal melakukan backup");
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (!confirm("Apakah Anda yakin ingin menghapus SEMUA riwayat login? Data yang dihapus tidak dapat dikembalikan.")) return;
+    
+    try {
+      const res = await fetch("/api/admin/login-logs", { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        alert("Riwayat login berhasil dihapus");
+        fetchLogs();
+      } else {
+        alert(data.message || "Gagal menghapus riwayat login");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Terjadi kesalahan koneksi");
     }
   };
 
@@ -94,9 +126,15 @@ export default function LoginHistoryPage() {
     (log.user_agent || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(sortedFiltered.length / ITEMS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
-  const paginated = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+  const paginated = sortedFiltered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
   // Reset page when search changes
   useEffect(() => {
@@ -115,7 +153,21 @@ export default function LoginHistoryPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari username, IP, User Agent..." className="pl-12 text-sm" />
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
+            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg font-semibold transition-colors text-sm shadow-sm"
+          >
+            <ArrowUpDown size={18} /> {sortOrder === "desc" ? "Terbaru" : "Terlama"}
+          </button>
+          {isAdmin() && (
+            <button
+              onClick={handleClearHistory}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors text-sm shadow-sm"
+            >
+              <Trash2 size={18} /> Hapus Riwayat
+            </button>
+          )}
           <button
             onClick={handleBackup}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors text-sm shadow-sm"
