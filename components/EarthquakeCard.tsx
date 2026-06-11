@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   AlertTriangle, 
-  Loader, 
   RefreshCw, 
   Calendar, 
   Clock, 
@@ -70,13 +69,13 @@ export default function EarthquakeCard() {
   const isTsunamiSafe = gempa?.Potensi?.toLowerCase().includes("tidak berpotensi");
 
   return (
-    <section id="gempa" className="py-24 bg-gray-50 text-slate-800 relative overflow-hidden border-t border-b border-gray-100">
+    <section id="gempa" className="py-16 sm:py-24 bg-gray-50 text-slate-800 relative overflow-hidden border-t border-b border-gray-100">
       {/* Decorative background grid and glowing circles */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-35" />
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-red-500/5 rounded-full blur-3xl" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-16 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-16 relative z-10">
         
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -85,10 +84,10 @@ export default function EarthquakeCard() {
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               BMKG TEWS (Early Warning System)
             </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-none">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight sm:leading-none">
               Informasi Gempabumi Terkini
             </h2>
-            <p className="text-slate-500 mt-2.5 text-sm md:text-base max-w-2xl leading-relaxed">
+            <p className="text-slate-500 mt-2 text-sm md:text-base max-w-2xl leading-relaxed">
               Monitoring seismik real-time gempabumi berkekuatan tinggi di seluruh wilayah Indonesia langsung dari stasiun geofisika nasional.
             </p>
           </div>
@@ -150,10 +149,10 @@ export default function EarthquakeCard() {
                 {/* Left Column: Shakemap Image */}
                 {shakemapUrl && !imgError ? (
                   <div className="w-full lg:w-5/12 bg-gray-50 p-6 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-200 relative group overflow-hidden">
-                    <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-md bg-white border border-gray-200 text-[10px] uppercase font-bold text-slate-600 tracking-wider shadow-sm">
-                      Visualisasi Shakemap
+                    <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10 px-2 sm:px-3 py-0.5 sm:py-1 rounded-md bg-white border border-gray-200 text-[9px] sm:text-[10px] uppercase font-bold text-slate-600 tracking-wider shadow-sm">
+                       Visualisasi Shakemap
                     </div>
-                    <div className="w-full aspect-square relative rounded-2xl overflow-hidden bg-white flex items-center justify-center border border-gray-100 shadow-md">
+                    <div className="w-full aspect-[4/3] sm:aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden bg-white flex items-center justify-center border border-gray-100 shadow-md">
                       <img
                         src={shakemapUrl}
                         alt="BMKG Shakemap"
@@ -171,74 +170,74 @@ export default function EarthquakeCard() {
                 )}
 
                 {/* Right Column: Parameters detail panel */}
-                <div className="flex-1 p-6 md:p-8 flex flex-col justify-between gap-8 bg-white">
+                <div className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col justify-between gap-6 sm:gap-8 bg-white">
                   <div className="space-y-6">
                     {/* Magnitude & Depth Cards */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center gap-4 hover:border-gray-200 hover:bg-gray-100/50 transition-all">
-                        <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 flex-shrink-0">
-                          <Activity size={24} />
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                      <div className="bg-gray-50 border border-gray-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:border-gray-200 hover:bg-gray-100/50 transition-all">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 flex-shrink-0">
+                          <Activity size={20} className="sm:w-6 sm:h-6" />
                         </div>
-                        <div>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kekuatan</p>
-                          <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 leading-none">{gempa.Magnitude} <span className="text-xs font-semibold text-orange-500">SR</span></p>
+                        <div className="min-w-0">
+                          <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kekuatan</p>
+                          <p className="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 mt-0.5 leading-none truncate">{gempa.Magnitude} <span className="text-[10px] sm:text-xs font-semibold text-orange-500">SR</span></p>
                         </div>
                       </div>
 
-                      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center gap-4 hover:border-gray-200 hover:bg-gray-100/50 transition-all">
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
-                          <Compass size={24} />
+                      <div className="bg-gray-50 border border-gray-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:border-gray-200 hover:bg-gray-100/50 transition-all">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                          <Compass size={20} className="sm:w-6 sm:h-6" />
                         </div>
-                        <div>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kedalaman</p>
-                          <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 leading-none">{gempa.Kedalaman}</p>
+                        <div className="min-w-0">
+                          <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kedalaman</p>
+                          <p className="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 mt-0.5 leading-none truncate">{gempa.Kedalaman}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Wilayah / Lokasi */}
-                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 hover:border-gray-200 hover:bg-gray-100/50 transition-all">
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-600 flex-shrink-0 mt-0.5">
-                          <MapPin size={20} />
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:border-gray-200 hover:bg-gray-100/50 transition-all">
+                      <div className="flex items-start gap-3 sm:gap-4">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-600 flex-shrink-0 mt-0.5">
+                          <MapPin size={16} className="sm:w-5 sm:h-5" />
                         </div>
-                        <div>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Pusat Gempa / Wilayah</p>
-                          <p className="text-base sm:text-lg font-bold text-slate-900 mt-1 leading-snug">{gempa.Wilayah}</p>
+                        <div className="min-w-0">
+                          <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest">Pusat Gempa / Wilayah</p>
+                          <p className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 mt-1 leading-snug break-words">{gempa.Wilayah}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Metadata Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-150 pt-6">
-                      <div className="flex items-center gap-3 text-sm">
-                        <Calendar size={16} className="text-slate-400 flex-shrink-0" />
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Tanggal Kejadian</p>
-                          <p className="text-slate-800 font-semibold mt-0.5">{gempa.Tanggal}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 border-t border-gray-150 pt-4 sm:pt-6">
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                        <Calendar size={14} className="sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase">Tanggal Kejadian</p>
+                          <p className="text-slate-800 font-semibold mt-0.5 truncate">{gempa.Tanggal}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 text-sm">
-                        <Clock size={16} className="text-slate-400 flex-shrink-0" />
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Waktu Kejadian</p>
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                        <Clock size={14} className="sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase">Waktu Kejadian</p>
                           <p className="text-slate-800 font-semibold mt-0.5">{gempa.Jam} WIB</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 text-sm">
-                        <Compass size={16} className="text-slate-400 flex-shrink-0" />
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Titik Koordinat</p>
-                          <p className="text-slate-800 font-semibold mt-0.5">{gempa.Lintang} — {gempa.Bujur}</p>
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                        <Compass size={14} className="sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase">Titik Koordinat</p>
+                          <p className="text-slate-800 font-semibold mt-0.5 truncate">{gempa.Lintang} — {gempa.Bujur}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 text-sm">
-                        <Info size={16} className="text-slate-400 flex-shrink-0" />
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Parameter Sistem</p>
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                        <Info size={14} className="sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase">Parameter Sistem</p>
                           <p className="text-slate-800 font-semibold mt-0.5 font-mono">Auto-TEWS</p>
                         </div>
                       </div>
@@ -246,32 +245,32 @@ export default function EarthquakeCard() {
                   </div>
 
                   {/* Warning Alerts / Tsunami Potency */}
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {gempa.Potensi && (
                       <div 
-                        className={`flex items-center gap-4 p-4 rounded-2xl border ${
+                        className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl border ${
                           isTsunamiSafe 
                             ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
                             : "bg-red-50 border-red-100 text-red-700 animate-pulse"
                         }`}
                       >
                         {isTsunamiSafe ? (
-                          <ShieldCheck size={24} className="flex-shrink-0" />
+                          <ShieldCheck size={20} className="sm:w-6 sm:h-6 flex-shrink-0" />
                         ) : (
-                          <AlertTriangle size={24} className="flex-shrink-0" />
+                          <AlertTriangle size={20} className="sm:w-6 sm:h-6 flex-shrink-0" />
                         )}
-                        <div>
-                          <p className="text-[10px] uppercase font-bold tracking-wider opacity-85">Status Ancaman Tsunami</p>
-                          <p className="text-sm font-bold mt-0.5 leading-snug">{gempa.Potensi}</p>
+                        <div className="min-w-0">
+                          <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider opacity-85">Status Ancaman Tsunami</p>
+                          <p className="text-xs sm:text-sm font-bold mt-0.5 leading-snug">{gempa.Potensi}</p>
                         </div>
                       </div>
                     )}
 
                     {/* MMI shake info */}
                     {gempa.Dirasakan && (
-                      <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Skala Guncangan (Dirasakan / MMI)</p>
-                        <p className="text-xs text-slate-700 leading-relaxed font-semibold mt-1.5">{gempa.Dirasakan}</p>
+                      <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gray-50 border border-gray-100">
+                        <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest">Skala Guncangan (Dirasakan / MMI)</p>
+                        <p className="text-[11px] sm:text-xs text-slate-700 leading-relaxed font-semibold mt-1.5">{gempa.Dirasakan}</p>
                       </div>
                     )}
                   </div>

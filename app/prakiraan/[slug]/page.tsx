@@ -216,7 +216,26 @@ export default function PrakiraanDetailPage() {
                     </div>
                   )}
 
-                  {/* Meta info bar */}
+                 
+
+                  {/* Explanation */}
+                  {showText && (
+                    <div>
+                      <h2 className="text-lg font-bold text-gray-900 mb-4">Penjelasan Detail</h2>
+                      {data.explanation ? (
+                        <div
+                          className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-[#003399] [&_a]:underline break-words"
+                          dangerouslySetInnerHTML={{ __html: data.explanation }}
+                        />
+                      ) : (
+                        <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-6 text-center">
+                          <p className="text-gray-400 text-sm italic">Belum ada penjelasan tersedia untuk prakiraan ini.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+ {/* Meta info bar */}
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm mb-6">
                     {data.uploader && (
                       <span className="flex items-center gap-2 text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
@@ -248,24 +267,6 @@ export default function PrakiraanDetailPage() {
                       </span>
                     )}
                   </div>
-
-                  {/* Explanation */}
-                  {showText && (
-                    <div>
-                      <h2 className="text-lg font-bold text-gray-900 mb-4">Penjelasan Detail</h2>
-                      {data.explanation ? (
-                        <div
-                          className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-[#003399] [&_a]:underline break-words"
-                          dangerouslySetInnerHTML={{ __html: data.explanation }}
-                        />
-                      ) : (
-                        <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-6 text-center">
-                          <p className="text-gray-400 text-sm italic">Belum ada penjelasan tersedia untuk prakiraan ini.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {/* Gallery grid for gambar_galeri */}
                   {showGallery && data.gallery_images && data.gallery_images.length > 0 && (
                     <div className="mt-8">

@@ -77,64 +77,86 @@ export default function BukuTamuPage() {
   };
 
   const handleExportPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text("Laporan Buku Tamu - Stasiun Meteorologi Maritim Tegal", 14, 20);
-    doc.setFontSize(8);
-    doc.text(`Diekspor: ${new Date().toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 27);
-    
-    const tableColumn = ["No", "Nama", "Email", "Telepon", "Instansi", "Keperluan", "Tanggal", "Foto"];
-    const tableRows: any[] = [];
+    const doc = new jsPDF("landscape");
+    const pageW = doc.internal.pageSize.width;
+    const pageH = doc.internal.pageSize.height;
+    const margin = 10;
 
-    filtered.forEach((item, index) => {
-      const rowData = [
-        index + 1,
+    const fotoDataMap: Record<number, string> = {};
+    const rows = filtered.map((item, idx) => {
+      if (item.foto_data) fotoDataMap[idx] = item.foto_data;
+      return [
+        String(idx + 1),
         item.nama,
         item.email,
         item.no_telepon,
         item.instansi || "-",
         item.keperluan,
-        new Date(item.created_at).toLocaleDateString("id-ID"),
-        "" // Placeholder for Foto column
+        new Date(item.created_at).toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' }),
+        "",
       ];
-      tableRows.push(rowData);
     });
 
+    // Title
+    doc.setFontSize(14);
+    doc.text("Laporan Buku Tamu - Stasiun Meteorologi Maritim Tegal", margin, margin + 5);
+    doc.setFontSize(8);
+    doc.text(`Diekspor: ${new Date().toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' })}`, margin, margin + 12);
+
     autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 32,
-      theme: 'grid',
-      styles: { fontSize: 7, valign: 'middle' },
-      bodyStyles: { minCellHeight: 18 },
-      headStyles: { fillColor: [0, 51, 153] },
-      columnStyles: {
-        7: { cellWidth: 18, halign: 'center' }
+      startY: margin + 16,
+      head: [["No.", "Nama", "Email", "Telepon", "Instansi", "Keperluan", "Tanggal", "Foto"]],
+      body: rows,
+      theme: "grid",
+      styles: { fontSize: 7, valign: "middle" },
+      headStyles: {
+        fillColor: [0, 51, 153],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 8,
+        halign: "center",
       },
+      bodyStyles: {
+        fontSize: 7,
+        cellPadding: 2,
+        minCellHeight: 18,
+      },
+      columnStyles: {
+        0: { cellWidth: 10, halign: "center" },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 45 },
+        3: { cellWidth: 28 },
+        4: { cellWidth: 35 },
+        5: { cellWidth: "auto" },
+        6: { cellWidth: 30, halign: "center" },
+        7: { cellWidth: 22, halign: "center" },
+      },
+      margin: { top: margin + 14, right: margin, bottom: margin, left: margin },
       didDrawCell: (data) => {
-        if (data.section === 'body' && data.column.index === 7) {
-          const item = filtered[data.row.index];
-          if (item && item.foto_data) {
-            try {
-              const imgData = item.foto_data.startsWith('data:') 
-                ? item.foto_data 
-                : `data:image/jpeg;base64,${item.foto_data}`;
-              
-              const padding = 1.5;
-              const size = Math.min(data.cell.width, data.cell.height) - padding * 2;
-              const x = data.cell.x + (data.cell.width - size) / 2;
-              const y = data.cell.y + (data.cell.height - size) / 2;
-              
-              doc.addImage(imgData, 'JPEG', x, y, size, size);
-            } catch (e) {
-              console.error("Gagal menambahkan foto ke PDF:", e);
-            }
+        if (data.section === "body" && data.column.index === 7) {
+          const foto = fotoDataMap[data.row.index];
+          if (!foto) return;
+          const imgData = foto.startsWith("data:") ? foto : `data:image/jpeg;base64,${foto}`;
+          try {
+            const padding = 1.5;
+            const size = Math.min(data.cell.width, data.cell.height) - padding * 2;
+            if (size <= 2) return;
+            const x = data.cell.x + (data.cell.width - size) / 2;
+            const y = data.cell.y + (data.cell.height - size) / 2;
+            doc.addImage(imgData, "JPEG", x, y, size, size);
+          } catch (e) {
+            console.error("Gagal menambahkan foto ke PDF:", e);
           }
         }
       },
-      didDrawPage: (data) => {
+      didDrawPage: () => {
         doc.setFontSize(6);
-        doc.text("Halaman " + String(data.pageNumber), doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10);
+        doc.text(
+          "Halaman " + String(doc.getCurrentPageInfo().pageNumber),
+          pageW - margin,
+          pageH - 5,
+          { align: "right" }
+        );
       },
     });
 

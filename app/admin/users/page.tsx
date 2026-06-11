@@ -199,10 +199,10 @@ export default function UsersManager() {
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left py-3 px-3 font-semibold text-gray-500">Username</th>
-                  <th className="text-left py-3 px-3 font-semibold text-gray-500">Nama</th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 hidden sm:table-cell">Nama</th>
                   <th className="text-left py-3 px-3 font-semibold text-gray-500">Role</th>
-                  <th className="text-left py-3 px-3 font-semibold text-gray-500">Status</th>
-                  <th className="text-left py-3 px-3 font-semibold text-gray-500">Dibuat</th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 hidden md:table-cell">Status</th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 hidden lg:table-cell">Dibuat</th>
                   <th className="text-right py-3 px-3 font-semibold text-gray-500">Aksi</th>
                 </tr>
               </thead>
@@ -211,8 +211,9 @@ export default function UsersManager() {
                   <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-3 px-3">
                       <span className="font-semibold text-gray-900">{user.username}</span>
+                      <span className="sm:hidden text-gray-400 text-[10px] block">{user.nama || "-"}</span>
                     </td>
-                    <td className="py-3 px-3 text-gray-600">{user.nama || "-"}</td>
+                    <td className="py-3 px-3 text-gray-600 hidden sm:table-cell">{user.nama || "-"}</td>
                     <td className="py-3 px-3">
                       {user.role === "super_admin" ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-[10px] font-bold">
@@ -228,14 +229,14 @@ export default function UsersManager() {
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-3 hidden md:table-cell">
                       {user.is_active ? (
                         <span className="text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full text-[10px] font-bold">Aktif</span>
                       ) : (
                         <span className="text-red-600 bg-red-50 px-2.5 py-1 rounded-full text-[10px] font-bold">Nonaktif</span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-gray-500 text-xs">
+                    <td className="py-3 px-3 text-gray-500 text-xs hidden lg:table-cell">
                       {new Date(user.created_at).toLocaleDateString("id-ID", {
                         day: "2-digit", month: "short", year: "numeric"
                       })}

@@ -48,8 +48,6 @@ export function AdminRealtimeProvider({ children }: { children: React.ReactNode 
           layananNolRupiah: typeof nol.count === "number" ? nol.count : 0,
         });
       } catch (e) {
-        // Log unexpected errors to aid debugging
-        // eslint-disable-next-line no-console
         console.error("Error fetching initial admin stats:", e);
       }
     };

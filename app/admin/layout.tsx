@@ -19,7 +19,8 @@ import {
   Monitor, 
   Camera, 
   ConciergeBell, 
-  Clock 
+  Clock,
+  Network
 } from "lucide-react";
 import { NotificationProvider, useNotification } from "@/components/NotificationProvider";
 import { AdminRealtimeProvider } from "@/components/AdminRealtimeProvider";
@@ -52,6 +53,7 @@ function decodeUserFromToken(): UserInfo | null {
 const contentNavItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/hero-manager", label: "Slider Home", icon: ImageIcon },
+  { href: "/admin/struktur-organisasi", label: "Struktur Organisasi", icon: Network },
   { href: "/admin/publikasi-manager", label: "Publikasi / Buletin", icon: FileText },
   { href: "/admin/prakiraan-manager", label: "Prakiraan", icon: Compass },
   { href: "/admin/display-manager", label: "Kelola Display", icon: Monitor },
@@ -118,8 +120,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     };
 
     subscribeTo("buku_tamu", "Data Buku Tamu baru masuk");
-    subscribeTo("layanan_berbayar", "Layanan Berbayar baru masuk");
-    subscribeTo("layanan_nol_rupiah", "Layanan Nol Rupiah baru masuk");
+
     subscribeTo("kegiatan_documents", "Dokumentasi kegiatan baru masuk");
 
     return () => {

@@ -240,30 +240,30 @@ export default function LayananAdminPage() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Sampul</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Nama Layanan</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Deskripsi Singkat</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Tautan Google Form</th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider w-32">Aksi</th>
+                  <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider hidden sm:table-cell">Sampul</th>
+                  <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Nama Layanan</th>
+                  <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider hidden md:table-cell">Deskripsi Singkat</th>
+                  <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider hidden lg:table-cell">Tautan Google Form</th>
+                  <th className="px-4 md:px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider w-24 md:w-32">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-5">
+                    <td className="px-4 md:px-6 py-5 hidden sm:table-cell">
                       {item.cover_url ? (
-                        <img src={item.cover_url} alt="Cover" className="w-16 h-10 object-cover rounded" />
+                        <img src={item.cover_url} alt="Cover" className="w-12 md:w-16 h-8 md:h-10 object-cover rounded" />
                       ) : (
                         <span className="text-gray-400 text-xs italic">Tidak ada</span>
                       )}
                     </td>
-                    <td className="px-6 py-5 text-sm font-semibold text-gray-900 leading-snug">
+                    <td className="px-4 md:px-6 py-5 text-sm font-semibold text-gray-900 leading-snug">
                       {item.nama_layanan}
                     </td>
-                    <td className="px-6 py-5 text-sm text-gray-600 leading-relaxed max-w-md">
+                    <td className="px-4 md:px-6 py-5 text-sm text-gray-600 leading-relaxed max-w-md hidden md:table-cell">
                       {item.deskripsi || <span className="text-gray-400 italic">Tidak ada deskripsi</span>}
                     </td>
-                    <td className="px-6 py-5 text-sm text-[#003399]">
+                    <td className="px-4 md:px-6 py-5 text-sm text-[#003399] hidden lg:table-cell">
                       {item.url_google_form ? (
                         <a
                           href={item.url_google_form}
@@ -278,7 +278,7 @@ export default function LayananAdminPage() {
                         <span className="text-red-500 font-medium italic">Belum diset (Menampilkan Alert)</span>
                       )}
                     </td>
-                    <td className="px-6 py-5 text-center">
+                    <td className="px-4 md:px-6 py-5 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenEdit(item)}

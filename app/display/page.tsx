@@ -208,7 +208,7 @@ export default function DisplayPage() {
   };
 
   return (
-    <main className="h-screen w-screen bg-[#f8fafc] text-slate-800 flex flex-col overflow-hidden select-none">
+    <main className="h-screen w-screen bg-[#f8fafc] text-slate-800 flex flex-col overflow-y-auto md:overflow-hidden select-none">
       
       {/* CSS Keyframes for smooth rotating border glow */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -251,7 +251,7 @@ export default function DisplayPage() {
       </header>
 
       {/* ───── Main Content Viewport ───── */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-y-auto md:overflow-hidden min-h-0">
 
         {/* Left Side: Main Pamphlet Slideshow Display with Animated Glow */}
         <div className="w-full lg:flex-1 h-full flex flex-col justify-center items-center min-w-0 relative p-[3px]">
@@ -357,7 +357,7 @@ export default function DisplayPage() {
         </div>
 
         {/* Right Side: Port Weather & Earthquake parameters (Compact, constrained width) */}
-        <div className="w-full lg:w-[440px] shrink-0 h-full flex flex-col gap-4 overflow-hidden min-h-0">
+        <div className="w-full lg:w-[440px] shrink-0 lg:h-full flex flex-col gap-4 overflow-hidden min-h-0">
 
           {/* ───── Panel 1: Cuaca Pelabuhan (Port Weather) ───── */}
           <div className="flex-1 bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm flex flex-col justify-between min-h-0">
