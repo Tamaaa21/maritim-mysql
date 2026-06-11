@@ -204,7 +204,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50/50">
+    <div className="flex h-screen bg-blue-50/30">
       {/* Sidebar - Light, elegant, professional layout */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200/80 transition-transform duration-300 lg:relative lg:translate-x-0 overflow-hidden flex flex-col justify-between ${
@@ -298,16 +298,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header Bar */}
-        <header className="bg-white border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between flex-shrink-0 shadow-sm z-30">
+        <header className="bg-[#003399] border-b border-blue-900/50 px-4 sm:px-8 py-3.5 flex items-center justify-between flex-shrink-0 shadow-md z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors flex-shrink-0"
+              className="lg:hidden p-2 hover:bg-blue-800 rounded-xl text-white transition-colors flex-shrink-0"
               aria-label="Toggle Sidebar"
             >
               {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
-            <div className="hidden lg:flex items-center gap-2 text-xs font-bold text-slate-450 uppercase tracking-widest">
+            <div className="hidden lg:flex items-center gap-2 text-xs font-bold text-blue-200 uppercase tracking-widest">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Stasiun Maritim Tegal Connected
             </div>
@@ -316,12 +316,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           {/* Right Controls: Notification & Profile */}
           <div className="flex items-center gap-3 sm:gap-6">
             {/* User Profile */}
-            <div className="flex items-center gap-3 pl-4 sm:pl-6 border-l border-slate-100">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-slate-800 leading-tight">{user?.nama || user?.username || "Administrator"}</p>
-                <p className="text-[10px] text-slate-400 font-semibold capitalize mt-0.5">{user?.role === "super_admin" ? "Super Admin" : user?.role || "Admin Access"}</p>
+            <div className="flex items-center gap-3 pl-4 sm:pl-6 border-l border-white/20">
+              <div className="text-right hidden sm:block text-white">
+                <p className="text-xs font-bold text-white leading-tight">{user?.nama || user?.username || "Administrator"}</p>
+                <p className="text-[10px] text-blue-200 font-semibold capitalize mt-0.5">{user?.role === "super_admin" ? "Super Admin" : user?.role || "Admin Access"}</p>
               </div>
-              <div className="w-9 h-9 bg-gradient-to-br from-[#003399] to-blue-600 rounded-xl flex items-center justify-center text-white font-extrabold text-sm flex-shrink-0 shadow-md shadow-blue-500/10">
+              <div className="w-9 h-9 bg-gradient-to-br from-white to-blue-50 rounded-xl flex items-center justify-center text-[#003399] font-extrabold text-sm flex-shrink-0 shadow-md">
                 {userInitial}
               </div>
             </div>
@@ -329,7 +329,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Dynamic Route Content */}
-        <main className="flex-1 overflow-auto bg-slate-50/50">
+        <main className="flex-1 overflow-auto bg-blue-50/40">
           <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">{children}</div>
         </main>
       </div>
