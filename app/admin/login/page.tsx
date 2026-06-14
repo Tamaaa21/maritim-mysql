@@ -104,9 +104,9 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-gray-500 text-xs mt-6">
+        {/* <p className="text-center text-gray-500 text-xs mt-6">
           Demo: username: <span className="font-mono">admin</span> | password: <span className="font-mono">admin123</span>
-        </p>
+        </p> */}
       </div>
     </div>
   );

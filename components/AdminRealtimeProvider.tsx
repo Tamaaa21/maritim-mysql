@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import supabase from "@/lib/supabaseBrowser";
-import { useNotification } from "@/components/NotificationProvider";
 
 interface Stats {
   bukuTamu: number;
@@ -16,7 +15,6 @@ const AdminRealtimeContext = createContext<{ stats: Stats } | undefined>(undefin
 
 export function AdminRealtimeProvider({ children }: { children: React.ReactNode }) {
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS);
-  const { showNotification } = useNotification();
 
   useEffect(() => {
     const client = supabase;
@@ -58,13 +56,12 @@ export function AdminRealtimeProvider({ children }: { children: React.ReactNode 
 
     const subs: any[] = [];
 
-    const subscribeTo = (table: string, message: string, updater?: () => void) => {
+    const subscribeTo = (table: string, updater?: () => void) => {
       try {
         const ch = client
           .channel(`global-realtime:${table}`)
           .on("postgres_changes", { event: "INSERT", schema: "public", table }, () => {
             if (updater) updater();
-            showNotification(message, "success", 4000);
           })
           .subscribe();
         subs.push(ch);
@@ -73,9 +70,9 @@ export function AdminRealtimeProvider({ children }: { children: React.ReactNode 
       }
     };
 
-    subscribeTo("buku_tamu", "Data Buku Tamu baru masuk", () => setStats(s => ({ ...s, bukuTamu: s.bukuTamu + 1 })));
-    subscribeTo("layanan_berbayar", "Layanan Berbayar baru masuk", () => setStats(s => ({ ...s, layananBerbayar: s.layananBerbayar + 1 })));
-    subscribeTo("layanan_nol_rupiah", "Layanan Nol Rupiah baru masuk", () => setStats(s => ({ ...s, layananNolRupiah: s.layananNolRupiah + 1 })));
+    subscribeTo("buku_tamu", () => setStats(s => ({ ...s, bukuTamu: s.bukuTamu + 1 })));
+    subscribeTo("layanan_berbayar", () => setStats(s => ({ ...s, layananBerbayar: s.layananBerbayar + 1 })));
+    subscribeTo("layanan_nol_rupiah", () => setStats(s => ({ ...s, layananNolRupiah: s.layananNolRupiah + 1 })));
 
     return () => {
       try {
@@ -84,7 +81,7 @@ export function AdminRealtimeProvider({ children }: { children: React.ReactNode 
         try { subs.forEach(ch => ch.unsubscribe && ch.unsubscribe()); } catch {}
       }
     };
-  }, [showNotification]);
+  }, []);
 
   return <AdminRealtimeContext.Provider value={{ stats }}>{children}</AdminRealtimeContext.Provider>;
 }

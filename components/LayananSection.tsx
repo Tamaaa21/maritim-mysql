@@ -262,6 +262,7 @@ export default function LayananSection({ limit }: { limit?: number }) {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              suppressHydrationWarning
               className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative text-center"
               onClick={(e) => e.stopPropagation()}
             >

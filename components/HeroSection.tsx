@@ -58,6 +58,7 @@ export default function HeroSection() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
+            suppressHydrationWarning
             className="relative z-10 flex flex-wrap justify-center items-center gap-x-3 gap-y-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold tracking-wider uppercase text-center select-none max-w-7xl px-4"
           >
             {/* Main Title Words */}
@@ -68,7 +69,7 @@ export default function HeroSection() {
                 style={{ textShadow: '0 4px 12px rgba(0,0,0,0.6)' }}
               >
                 {word.split("").map((char, cIdx) => (
-                  <motion.span key={cIdx} variants={letterVariants} className="inline-block">
+                  <motion.span key={cIdx} variants={letterVariants} suppressHydrationWarning className="inline-block">
                     {char}
                   </motion.span>
                 ))}
@@ -81,7 +82,7 @@ export default function HeroSection() {
               style={{ textShadow: '0 4px 16px rgba(255, 215, 0, 0.25), 0 2px 4px rgba(0,0,0,0.6)' }}
             >
               {highlight.split("").map((char, cIdx) => (
-                <motion.span key={cIdx} variants={letterVariants} className="inline-block">
+                <motion.span key={cIdx} variants={letterVariants} suppressHydrationWarning className="inline-block">
                   {char}
                 </motion.span>
               ))}

@@ -13,7 +13,6 @@ interface WeatherData {
     direction_from: string;
   };
   humidity: number;
-  waves: number;
   updated: string;
 }
 
@@ -67,14 +66,12 @@ export default function MaritimeWeatherCard() {
 
   return (
     <div className="w-full max-w-sm mx-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 shadow-2xl relative overflow-hidden group hover:bg-white/15 transition-all duration-300">
-      {/* Decorative gradient blob */}
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/30 rounded-full blur-3xl group-hover:bg-blue-400/40 transition-all duration-500"></div>
 
       <div className="relative z-10 flex flex-col gap-6 text-white">
-        {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-bold text-lg text-white">Cuaca Pelabuhan Tegal</h3>
+            <h3 className="font-bold text-lg text-white">Cuaca Kota Tegal</h3>
             <p className="text-xs text-blue-100 mt-1 opacity-80">Update: {new Date(data.updated).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB</p>
           </div>
           <div className="p-2 bg-white/10 rounded-xl border border-white/10 shadow-sm">
@@ -82,7 +79,6 @@ export default function MaritimeWeatherCard() {
           </div>
         </div>
 
-        {/* Main Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <span className="text-3xl font-black">{data.temp}°C</span>
@@ -100,7 +96,6 @@ export default function MaritimeWeatherCard() {
           </div>
         </div>
 
-        {/* Maritime Stats */}
         <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/20">
           <div className="flex items-center gap-3 p-2 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
             <Wind size={20} className="text-blue-200" />
@@ -112,8 +107,8 @@ export default function MaritimeWeatherCard() {
           <div className="flex items-center gap-3 p-2 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
             <Waves size={20} className="text-blue-200" />
             <div className="flex flex-col">
-              <span className="text-[10px] text-blue-200 uppercase tracking-wider">Gelombang</span>
-              <span className="text-sm font-semibold">{data.waves} m</span>
+              <span className="text-[10px] text-blue-200 uppercase tracking-wider">Arah Angin</span>
+              <span className="text-sm font-semibold">{data.wind.direction_from}</span>
             </div>
           </div>
         </div>

@@ -35,7 +35,6 @@ interface WeatherData {
     direction_from: string;
   };
   humidity: number;
-  waves: number;
   updated: string;
 }
 
@@ -563,13 +562,13 @@ export default function DisplayPage() {
         {/* Right Side: Port Weather & Earthquake parameters (Compact, constrained width) */}
         <div className="w-full lg:w-[440px] shrink-0 lg:h-full flex flex-col gap-4 overflow-hidden min-h-0">
 
-          {/* ───── Panel 1: Cuaca Pelabuhan (Port Weather) ───── */}
+          {/* ───── Panel 1: Cuaca Kota Tegal ───── */}
           <div className="flex-1 bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm flex flex-col justify-between min-h-0">
             <div>
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-extrabold text-slate-850 text-sm md:text-base leading-tight">Cuaca Pelabuhan</h3>
-                  <p className="text-[9px] text-slate-400 mt-0.5">Stasiun Meteorologi Maritim Tegal</p>
+                  <h3 className="font-extrabold text-slate-850 text-sm md:text-base leading-tight">Cuaca Kota Tegal</h3>
+                  <p className="text-[9px] text-slate-400 mt-0.5">Prakiraan Cuaca Kelurahan Pesurungan Kidul</p>
                 </div>
                 {weather && (
                   <div className="p-1.5 bg-blue-50 rounded-xl text-blue-600 border border-blue-100 shadow-inner">
@@ -608,8 +607,8 @@ export default function DisplayPage() {
                     <div className="col-span-2 bg-slate-50 border border-slate-100 rounded-2xl p-2.5 flex items-center gap-2">
                       <Waves size={15} className="text-cyan-600 shrink-0" />
                       <div>
-                        <span className="text-[8px] text-slate-400 block uppercase font-bold tracking-wider leading-none">Tinggi Gelombang</span>
-                        <span className="text-xs font-extrabold text-slate-800">{weather.waves} meter</span>
+                        <span className="text-[8px] text-slate-400 block uppercase font-bold tracking-wider leading-none">Arah Angin</span>
+                        <span className="text-xs font-extrabold text-slate-800">{weather.wind.direction_from}</span>
                       </div>
                     </div>
                   </div>

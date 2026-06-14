@@ -79,6 +79,7 @@ export default function HeroBackgroundSlideshow({ onImageChange }: { onImageChan
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.5 }}
+            suppressHydrationWarning
             className="absolute inset-0 w-full h-full"
           >
             {isVideoUrl(images[current]) ? (

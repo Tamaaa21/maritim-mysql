@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { X, ChevronRight, Calendar } from "lucide-react";
-import { kegiatanTabs } from "@/components/kegiatanCategories";
-
 const activities = [
   {
     title: "Sosialisasi Info Cuaca Maritim",
@@ -161,21 +159,7 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
         </div>
 
         {/* Category Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {kegiatanTabs.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveCategory(tab)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
-                activeCategory === tab
-                  ? 'bg-[#003399] text-white'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-[#003399] hover:text-[#003399]'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+      
 
         {/* Gallery Grid */}
         <div className="flex flex-wrap justify-center gap-4">

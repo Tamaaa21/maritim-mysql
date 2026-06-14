@@ -33,7 +33,7 @@ export default function Navbar({ minimal = false }: { minimal?: boolean }) {
     setActive(found?.label || 'Home');
   }, [pathname, minimal]);
 
-  const isHome = pathname === "/";
+  const isHome = pathname ? pathname === "/" : false;
   const showScrolledBg = false; // Always blue background, matching other pages
   
   const [timeString, setTimeString] = useState("");
@@ -70,7 +70,17 @@ export default function Navbar({ minimal = false }: { minimal?: boolean }) {
       <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            onClick={() => {
+              setMenuOpen(false);
+              if (isHome) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              } else {
+                window.location.href = "/";
+              }
+            }}
+            className="flex items-center gap-2 sm:gap-3"
+          >
             <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-white">
               <img src="/bmkg-logo.png" alt="B" className="w-full h-full object-contain" />
             </div>
@@ -78,23 +88,46 @@ export default function Navbar({ minimal = false }: { minimal?: boolean }) {
               <p className="text-white font-bold text-sm sm:text-base leading-tight">BMKG</p>
               <p className="text-blue-200 text-xs leading-tight">Stasiun Meteorologi Maritim Tegal</p>
             </div>
-          </div>
+          </button>
 
           {/* Desktop Nav */}
           {!minimal && (
             <div className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className={`px-4 py-2 text-sm font-medium transition-colors rounded-md relative group ${
-                  active === link.label ? "text-white" : "text-blue-100 hover:text-white"
-                }`}>
-                  {link.label}
-                  <span
-                    className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-yellow-400 transition-all duration-200 ${
-                      active === link.label ? "w-3/4" : "w-0 group-hover:w-3/4"
-                    }`}
-                  />
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                if (link.label === "Home" && isHome) {
+                  return (
+                    <button
+                      key={link.label}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`px-4 py-2 text-sm font-medium transition-colors rounded-md relative group ${
+                        active === link.label ? "text-white" : "text-blue-100 hover:text-white"
+                      }`}
+                    >
+                      {link.label}
+                      <span
+                        className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-yellow-400 transition-all duration-200 ${
+                          active === link.label ? "w-3/4" : "w-0 group-hover:w-3/4"
+                        }`}
+                      />
+                    </button>
+                  );
+                }
+                return (
+                  <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className={`px-4 py-2 text-sm font-medium transition-colors rounded-md relative group ${
+                    active === link.label ? "text-white" : "text-blue-100 hover:text-white"
+                  }`}>
+                    {link.label}
+                    <span
+                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-yellow-400 transition-all duration-200 ${
+                        active === link.label ? "w-3/4" : "w-0 group-hover:w-3/4"
+                      }`}
+                    />
+                  </Link>
+                );
+              })}
             </div>
           )}
 
@@ -123,16 +156,33 @@ export default function Navbar({ minimal = false }: { minimal?: boolean }) {
       {/* Mobile Menu */}
       {!minimal && menuOpen && (
         <div className="md:hidden bg-[#003399] border-t border-blue-700 px-4 py-3">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              onClick={() => { setActive(link.label); setMenuOpen(false); }}
-              className="block px-3 py-2 text-sm text-blue-100 hover:text-white hover:bg-blue-800 rounded-md transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            if (link.label === "Home" && isHome) {
+              return (
+                <button
+                  key={link.label}
+                  onClick={() => {
+                    setActive("Home");
+                    setMenuOpen(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="block w-full text-left px-3 py-2 text-sm text-blue-100 hover:text-white hover:bg-blue-800 rounded-md transition-colors"
+                >
+                  {link.label}
+                </button>
+              );
+            }
+            return (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => { setActive(link.label); setMenuOpen(false); }}
+                className="block px-3 py-2 text-sm text-blue-100 hover:text-white hover:bg-blue-800 rounded-md transition-colors"
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
       )}
     </nav>

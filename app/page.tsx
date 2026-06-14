@@ -2,7 +2,6 @@
 
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import AboutSection from "@/components/AboutSection";
 import PrakiraanSection from "@/components/PrakiraanSection";
 import LayananSection from "@/components/LayananSection";
 import KegiatanSection from "@/components/KegiatanSection";

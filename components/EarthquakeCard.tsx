@@ -95,6 +95,7 @@ export default function EarthquakeCard() {
           <button
             onClick={fetchGempa}
             disabled={loadingGempa}
+            suppressHydrationWarning
             className="self-start md:self-end flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-gray-50 border border-gray-200 text-slate-700 hover:text-slate-900 font-semibold text-xs transition-all duration-300 disabled:opacity-50 active:scale-95 shadow-sm"
           >
             <RefreshCw size={13} className={loadingGempa ? "animate-spin" : ""} />
@@ -112,6 +113,7 @@ export default function EarthquakeCard() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                suppressHydrationWarning
                 className="py-24 flex flex-col items-center justify-center gap-4 text-slate-400"
               >
                 <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
@@ -123,6 +125,7 @@ export default function EarthquakeCard() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                suppressHydrationWarning
                 className="py-20 flex flex-col items-center justify-center gap-3 text-center px-4"
               >
                 <div className="w-16 h-16 bg-red-50 border border-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
@@ -144,6 +147,7 @@ export default function EarthquakeCard() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.6 }}
+                suppressHydrationWarning
                 className="flex flex-col lg:flex-row items-stretch"
               >
                 {/* Left Column: Shakemap Image */}

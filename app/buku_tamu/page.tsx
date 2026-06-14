@@ -213,7 +213,7 @@ export default function BukuTamuPage() {
                 <p className="text-[9px] uppercase tracking-widest font-black text-blue-300/75 leading-none">
                   Stasiun Maritim Tegal
                 </p>
-                <p className="text-[8px] text-blue-300/40 mt-1 leading-none">
+                <p className="text-[8px] text-blue-300/40 mt-1 leading-none" suppressHydrationWarning>
                   © {new Date().getFullYear()} BMKG Indonesia. All rights reserved.
                 </p>
               </div>

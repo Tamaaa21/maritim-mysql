@@ -22,9 +22,7 @@ import {
   Clock,
   Network
 } from "lucide-react";
-import { NotificationProvider, useNotification } from "@/components/NotificationProvider";
 import { AdminRealtimeProvider } from "@/components/AdminRealtimeProvider";
-import supabase from "@/lib/supabaseBrowser";
 
 interface UserInfo {
   username: string;
@@ -101,11 +99,9 @@ const ADMIN_ONLY_PATHS = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <NotificationProvider>
       <AdminRealtimeProvider>
         <AdminLayoutContent>{children}</AdminLayoutContent>
       </AdminRealtimeProvider>
-    </NotificationProvider>
   );
 }
 
@@ -116,52 +112,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserInfo | null>(null);
-  const { notifications, removeNotification, showNotification } = useNotification();
-  const [notifOpen, setNotifOpen] = useState(false);
 
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
   const userInitial = user?.nama?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || "A";
-
-  useEffect(() => {
-    const client = supabase;
-    if (!client) return;
-
-    const subs: any[] = [];
-
-    const subscribeTo = (table: string, message: string) => {
-      try {
-        const ch = client
-          .channel(`global-notif:${table}`)
-          .on(
-            "postgres_changes",
-            { event: "INSERT", schema: "public", table },
-            (payload: any) => {
-              showNotification(message, "success", 5000);
-            }
-          )
-          .subscribe();
-        subs.push(ch);
-      } catch (e) {
-        // ignore
-      }
-    };
-
-    subscribeTo("buku_tamu", "Data Buku Tamu baru masuk");
-
-    subscribeTo("kegiatan_documents", "Dokumentasi kegiatan baru masuk");
-
-    return () => {
-      try {
-        subs.forEach((ch) => client.removeChannel(ch));
-      } catch (e) {
-        try {
-          subs.forEach((ch) => ch.unsubscribe && ch.unsubscribe());
-        } catch (err) {
-          // ignore
-        }
-      }
-    };
-  }, [showNotification]);
 
   useEffect(() => {
     try {

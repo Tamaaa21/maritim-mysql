@@ -7,17 +7,22 @@ import { X } from "lucide-react";
 export default function WhatsAppFloating() {
   const pathname = usePathname();
   const [showTooltip, setShowTooltip] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
-  // Show tooltip after a slight delay for better transition effect
   useEffect(() => {
     const timer = setTimeout(() => setShowTooltip(true), 1500);
     return () => clearTimeout(timer);
   }, []);
 
-  // hide floating WA on admin, display, and buku tamu routes
-  if (pathname && (pathname.startsWith("/admin") || pathname === "/display" || pathname === "/dislay" || pathname === "/buku_tamu")) {
-    return null;
-  }
+  useEffect(() => {
+    if (pathname && (pathname.startsWith("/admin") || pathname === "/display" || pathname === "/dislay" || pathname === "/buku_tamu")) {
+      setHidden(true);
+    } else {
+      setHidden(false);
+    }
+  }, [pathname]);
+
+  if (hidden) return null;
 
   const phone = "628112562200"; // Indonesian full international format without +
   const text = encodeURIComponent("Halo Stasiun Meteorologi Maritim Tegal, saya ingin bertanya tentang layanan.");

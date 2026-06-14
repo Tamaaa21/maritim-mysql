@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Facebook, Instagram, Youtube, Twitter, MapPin, Phone, Mail } from "lucide-react";
+import Script from "next/script";
 
 const footerLinks = {
   Menu: [
@@ -78,6 +79,9 @@ export default function Footer() {
                   </a>
                 ))}
               </div>
+             < div className="mt-6">
+                  {/* <div id="histats_counter"></div> */}
+</div>
             </div>
 
             {/* Links */}
@@ -200,6 +204,23 @@ export default function Footer() {
             </div>
           </div>
         </div>
+
+        <Script id="histats" strategy="afterInteractive">
+  {`
+    var _Hasync = _Hasync || [];
+    _Hasync.push(['Histats.start', '1,5032900,4,430,112,75,00011111']);
+    _Hasync.push(['Histats.fasi', '1']);
+    _Hasync.push(['Histats.track_hits', '']);
+
+    (function() {
+      var hs = document.createElement('script');
+      hs.type = 'text/javascript';
+      hs.async = true;
+      hs.src = '//s10.histats.com/js15_as.js';
+      document.body.appendChild(hs);
+    })();
+  `}
+</Script>
       </div>
     </footer>
   );
