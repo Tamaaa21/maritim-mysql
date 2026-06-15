@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { verifyPassword, hashPassword, createSessionToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -46,31 +47,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (user.password !== password) {
+    let passwordValid: boolean;
+    if (user.password.startsWith("$2")) {
+      passwordValid = await verifyPassword(password, user.password);
+    } else {
+      passwordValid = user.password === password;
+      if (passwordValid) {
+        const hashed = await hashPassword(password);
+        await supabase.from("users").update({ password: hashed }).eq("id", user.id);
+      }
+    }
+
+    if (!passwordValid) {
       return NextResponse.json(
         { message: "Username atau password salah" },
         { status: 401 }
       );
     }
 
-    const token = Buffer.from(`${user.username}:${user.id}:${Date.now()}`).toString("base64");
+    const token = createSessionToken(user.id, user.role);
 
-    // Record login history
     const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       || request.headers.get("x-real-ip")
       || "unknown";
 
     const userAgent = request.headers.get("user-agent") || "unknown";
 
-    try {
-      await supabase.from("login_logs").insert({
-        user_id: user.id,
-        username: user.username,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        aktivitas: "login",
-      });
-    } catch (logError) {
+    const { error: logError } = await supabase.from("login_logs").insert({
+      user_id: user.id,
+      username: user.username,
+      ip_address: ipAddress || "unknown",
+      user_agent: userAgent || "unknown",
+    });
+
+    if (logError) {
       console.error("Failed to record login log:", logError);
     }
 

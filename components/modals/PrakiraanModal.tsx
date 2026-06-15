@@ -22,9 +22,10 @@ interface PrakiraanModalProps {
 }
 
 export default function PrakiraanModal({ isOpen, onClose, data }: PrakiraanModalProps) {
+  const [index, setIndex] = useState<number>(0);
+
   if (!isOpen || !data) return null;
   const images = data.images && data.images.length > 0 ? data.images : (data.image ? [{ url: data.image, explanation: data.explanation || '' }] : []);
-  const [index, setIndex] = useState<number>(0);
   const prev = () => setIndex((i: number) => (i - 1 + images.length) % images.length);
   const next = () => setIndex((i: number) => (i + 1) % images.length);
 

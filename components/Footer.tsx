@@ -79,9 +79,9 @@ export default function Footer() {
                   </a>
                 ))}
               </div>
-             < div className="mt-6">
-                  {/* <div id="histats_counter"></div> */}
-</div>
+              < div className="mt-6">
+                <div id="histats_counter"></div>
+              </div>
             </div>
 
             {/* Links */}
@@ -196,17 +196,13 @@ export default function Footer() {
           </div>
 
           {/* Bottom Bar */}
-          <div className="border-t border-white/15 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-blue-400">
-            <p>© 2024 Stasiun Meteorologi Maritim Tegal – BMKG. All rights reserved.</p>
-            <div className="flex gap-4">
-              <Link href="/privacy" className="hover:text-white transition-colors">Kebijakan Privasi</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Syarat & Ketentuan</Link>
-            </div>
+          <div className="border-t border-white/15 pt-6 flex items-center justify-center text-xs text-blue-400 text-center">
+            <p>© 2026 Stasiun Meteorologi Maritim Tegal – BMKG. All rights reserved.</p>
           </div>
         </div>
 
         <Script id="histats" strategy="afterInteractive">
-  {`
+          {`
     var _Hasync = _Hasync || [];
     _Hasync.push(['Histats.start', '1,5032900,4,430,112,75,00011111']);
     _Hasync.push(['Histats.fasi', '1']);
@@ -220,7 +216,7 @@ export default function Footer() {
       document.body.appendChild(hs);
     })();
   `}
-</Script>
+        </Script>
       </div>
     </footer>
   );

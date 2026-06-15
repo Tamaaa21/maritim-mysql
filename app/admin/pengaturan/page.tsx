@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { Lock, Eye, EyeOff, Save, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { showSuccess, showError } from '@/lib/sweetalert';
 
 export default function PengaturanPage() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -18,21 +17,19 @@ export default function PengaturanPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (!oldPassword || !newPassword || !confirmPassword) {
-      setError("Semua field harus diisi");
+      showError("Gagal", "Semua field harus diisi");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Konfirmasi kata sandi baru tidak cocok");
+      showError("Gagal", "Konfirmasi kata sandi baru tidak cocok");
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("Kata sandi baru harus minimal 6 karakter");
+      showError("Gagal", "Kata sandi baru harus minimal 6 karakter");
       return;
     }
 
@@ -55,16 +52,16 @@ export default function PengaturanPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setSuccess("Kata sandi berhasil diubah");
+        showSuccess("Berhasil", "Kata sandi berhasil diubah");
         setOldPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        setError(data.message || "Gagal mengubah kata sandi");
+        showError("Gagal", data.message || "Gagal mengubah kata sandi");
       }
     } catch (err) {
       console.error(err);
-      setError("Terjadi kesalahan koneksi");
+      showError("Gagal", "Terjadi kesalahan koneksi");
     } finally {
       setLoading(false);
     }
@@ -84,18 +81,6 @@ export default function PengaturanPage() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm font-medium">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="p-4 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-xl text-sm font-medium flex items-center gap-2">
-              <CheckCircle size={18} />
-              {success}
-            </div>
-          )}
 
           {/* Old Password */}
           <div className="space-y-1.5">

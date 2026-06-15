@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -23,6 +23,31 @@ import {
   Network
 } from "lucide-react";
 import { AdminRealtimeProvider } from "@/components/AdminRealtimeProvider";
+
+// Patch fetch BEFORE any component renders
+if (typeof window !== "undefined") {
+  const orig = window.fetch.bind(window);
+  window.fetch = function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    if (url.includes("/api/admin/")) {
+      try {
+        const token = sessionStorage.getItem("adminToken");
+        if (token) {
+          init = init || {};
+          init.headers = init.headers || {};
+          if (Array.isArray(init.headers)) {
+            init.headers = [...init.headers, ["authorization", `Bearer ${token}`]];
+          } else if (init.headers instanceof Headers) {
+            init.headers.set("authorization", `Bearer ${token}`);
+          } else {
+            (init.headers as Record<string, string>)["authorization"] = `Bearer ${token}`;
+          }
+        }
+      } catch {}
+    }
+    return orig(input, init);
+  };
+}
 
 interface UserInfo {
   username: string;

@@ -72,18 +72,22 @@ export default function BukuTamuPage() {
   }, [search, data]);
 
   const handleClearHistory = async () => {
-    const isDeletingSpecific = selectedLogs.size > 0;
+    if (selectedLogs.size === 0) {
+      showError('Pilih Data', 'Silakan pilih data yang ingin dihapus terlebih dahulu.');
+      return;
+    }
+
     const confirm = await showConfirm(
-      isDeletingSpecific ? 'Hapus Data Terpilih?' : 'Hapus Semua Data?', 
-      isDeletingSpecific ? `Apakah Anda yakin ingin menghapus ${selectedLogs.size} data terpilih?` : "Apakah Anda yakin ingin menghapus SEMUA data buku tamu? Data yang dihapus tidak dapat dikembalikan."
+      'Hapus Data Terpilih?',
+      `Apakah Anda yakin ingin menghapus ${selectedLogs.size} data terpilih?`
     );
     if (!confirm.isConfirmed) return;
 
     try {
-      const payload = isDeletingSpecific ? JSON.stringify({ ids: Array.from(selectedLogs) }) : undefined;
+      const payload = JSON.stringify({ ids: Array.from(selectedLogs) });
       const res = await fetch("/api/admin/buku-tamu", {
         method: "DELETE",
-        headers: isDeletingSpecific ? { "Content-Type": "application/json" } : undefined,
+        headers: { "Content-Type": "application/json" },
         body: payload
       });
       const resData = await res.json();
@@ -308,7 +312,7 @@ export default function BukuTamuPage() {
                   onClick={handleClearHistory}
                   className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors text-sm shadow-sm"
                 >
-                  <Trash2 size={18} /> {selectedLogs.size > 0 ? `Hapus (${selectedLogs.size})` : "Hapus Semua"}
+                  <Trash2 size={18} /> Hapus ({selectedLogs.size})
                 </button>
               </>
             ) : (

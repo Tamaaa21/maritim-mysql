@@ -50,7 +50,7 @@ export default function VisiMisiPage() {
 
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50/30 border-l-4 border-[#003399] p-5 md:p-6 rounded-r-2xl mb-8">
                 <p className="text-slate-800 font-extrabold text-base md:text-lg italic leading-relaxed">
-                  "BMKG yang berkelas dunia dengan spirit socioentrepreneur untuk mewujudkan Indonesia Maju yang Berdaulat, Mandiri, dan berkepribadian berlandaskan Gotong-Royong"
+                  &quot;BMKG yang berkelas dunia dengan spirit socioentrepreneur untuk mewujudkan Indonesia Maju yang Berdaulat, Mandiri, dan berkepribadian berlandaskan Gotong-Royong&quot;
                 </p>
               </div>
 

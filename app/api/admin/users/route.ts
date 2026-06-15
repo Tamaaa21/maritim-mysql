@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { hashPassword } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,11 +58,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Username sudah digunakan" }, { status: 409 });
     }
 
+    const hashedPassword = await hashPassword(password);
+
     const { data, error } = await supabase
       .from("users")
       .insert({
         username,
-        password,
+        password: hashedPassword,
         role: role || "karyawan",
         nama: nama || username,
       })

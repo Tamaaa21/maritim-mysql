@@ -78,18 +78,22 @@ export default function LoginHistoryPage() {
   };
 
   const handleClearHistory = async () => {
-    const isDeletingSpecific = selectedLogs.size > 0;
+    if (selectedLogs.size === 0) {
+      showError('Pilih Data', 'Silakan pilih riwayat login yang ingin dihapus terlebih dahulu.');
+      return;
+    }
+
     const confirm = await showConfirm(
-      isDeletingSpecific ? 'Hapus Riwayat Terpilih?' : 'Hapus Semua Riwayat?', 
-      isDeletingSpecific ? `Apakah Anda yakin ingin menghapus ${selectedLogs.size} riwayat login terpilih?` : "Apakah Anda yakin ingin menghapus SEMUA riwayat login? Data yang dihapus tidak dapat dikembalikan."
+      'Hapus Riwayat Terpilih?',
+      `Apakah Anda yakin ingin menghapus ${selectedLogs.size} riwayat login terpilih?`
     );
     if (!confirm.isConfirmed) return;
     
     try {
-      const payload = isDeletingSpecific ? JSON.stringify({ ids: Array.from(selectedLogs) }) : undefined;
+      const payload = JSON.stringify({ ids: Array.from(selectedLogs) });
       const res = await fetch("/api/admin/login-logs", { 
         method: "DELETE",
-        headers: isDeletingSpecific ? { "Content-Type": "application/json" } : undefined,
+        headers: { "Content-Type": "application/json" },
         body: payload
       });
       const data = await res.json();
@@ -189,7 +193,7 @@ export default function LoginHistoryPage() {
   }, [search, dateFilter]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-0">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">History Login</h1>
         <p className="text-gray-500 mt-2">Pantau aktivitas masuk pengguna ke panel administrasi.</p>
@@ -199,7 +203,7 @@ export default function LoginHistoryPage() {
         <div className="relative w-full sm:max-w-md flex flex-col sm:flex-row gap-2">
           <div className="relative flex-grow">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari username, IP, User Agent..." className="pl-12 text-sm" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari username, IP, User Agent..." className="pl-12 text-sm w-full" />
           </div>
           <Input 
             type="date" 
@@ -229,7 +233,7 @@ export default function LoginHistoryPage() {
                   onClick={handleClearHistory}
                   className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-colors text-sm shadow-sm"
                 >
-                  <Trash2 size={18} /> {selectedLogs.size > 0 ? `Hapus (${selectedLogs.size})` : "Hapus Semua"}
+                  <Trash2 size={18} /> Hapus ({selectedLogs.size})
                 </button>
               </>
             ) : (
@@ -254,7 +258,7 @@ export default function LoginHistoryPage() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <LogIn size={20} className="text-[#003399]" />
@@ -346,7 +350,7 @@ export default function LoginHistoryPage() {
                   &bull; {filtered.length} total catatan
                 </p>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 justify-center sm:justify-start mt-3 sm:mt-0">
                   <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={safePage === 1}

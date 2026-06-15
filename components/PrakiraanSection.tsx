@@ -46,11 +46,11 @@ const ExpiredPopup = ({
         </h3>
         <p className="text-gray-500 text-sm mt-2 leading-relaxed font-normal">
           {isScheduled ? (
-            <>Informasi prakiraan <span className="font-semibold text-gray-700">"{title}"</span> belum mulai tayang. Silakan kembali lagi pada jadwal yang telah ditentukan.</>
+            <>Informasi prakiraan <span className="font-semibold text-gray-700">&quot;{title}&quot;</span> belum mulai tayang. Silakan kembali lagi pada jadwal yang telah ditentukan.</>
           ) : isUnupdated ? (
-            <>Informasi prakiraan <span className="font-semibold text-gray-700">"{title}"</span> belum diperbarui ke versi terbaru. Anda tetap dapat melihat informasi sebelumnya.</>
+            <>Informasi prakiraan <span className="font-semibold text-gray-700">&quot;{title}&quot;</span> belum diperbarui ke versi terbaru. Anda tetap dapat melihat informasi sebelumnya.</>
           ) : (
-            <>Informasi prakiraan <span className="font-semibold text-gray-700">"{title}"</span> sudah melewati masa tayang. Silakan kembali lagi nanti untuk informasi terbaru.</>
+            <>Informasi prakiraan <span className="font-semibold text-gray-700">&quot;{title}&quot;</span> sudah melewati masa tayang. Silakan kembali lagi nanti untuk informasi terbaru.</>
           )}
         </p>
       </div>

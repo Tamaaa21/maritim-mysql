@@ -13,17 +13,25 @@ export const metadata: Metadata = {
     icon: '/bmkg-logo.png',
   },
   openGraph: {
+    title: 'BMKG – Stasiun Meteorologi Maritim Tegal',
+    description: 'Portal informasi cuaca maritim Stasiun Meteorologi Maritim Tegal – BMKG.',
+    siteName: 'BMKG Maritim Tegal',
+    type: 'website',
     images: [
       {
-        url: 'https://bolt.new/static/og_default.png',
+        url: '/bmkg-logo.png',
+        width: 512,
+        height: 512,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
+    title: 'BMKG – Stasiun Meteorologi Maritim Tegal',
+    description: 'Portal informasi cuaca maritim Stasiun Meteorologi Maritim Tegal – BMKG.',
     images: [
       {
-        url: 'https://bolt.new/static/og_default.png',
+        url: '/bmkg-logo.png',
       },
     ],
   },

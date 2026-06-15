@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
 
   try {
     // If source=bmkg and BMKG url configured, proxy BMKG API with caching
-    const source = url.searchParams.get('source');
     if (source === 'bmkg' && bmkgUrlEnv) {
       // return cached if fresh
       if (BMKG_CACHE.expires > Date.now() && BMKG_CACHE.data) {

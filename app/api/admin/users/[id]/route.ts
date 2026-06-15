@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { hashPassword } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -35,7 +36,7 @@ export async function PATCH(req: Request, context: any) {
       if (body.password.length < 6) {
         return NextResponse.json({ success: false, message: "Password minimal 6 karakter" }, { status: 400 });
       }
-      updateData.password = body.password;
+      updateData.password = await hashPassword(body.password);
     }
 
     const { data, error } = await supabase
