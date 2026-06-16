@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { logActivity } from "@/lib/activity-log";
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'publications.json');
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'publications');
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
     if (uploader) item.uploader = uploader;
     list.push(item);
     fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2));
+    logActivity(req.headers.get("x-auth-user"), `Menambah publikasi: ${title}`, req);
     return new Response(JSON.stringify({ success: true, data: item }), { status: 201 });
   } catch (err: any) {
     return new Response(JSON.stringify({ success: false, error: String(err) }), { status: 500 });
@@ -94,6 +96,7 @@ export async function DELETE(req: NextRequest) {
   } catch (e) {}
   list = list.map((it: any, i: number) => ({ ...it, order: i + 1 }));
   fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2));
+  logActivity(req.headers.get("x-auth-user"), `Menghapus publikasi: ${removed?.title || id}`, req);
   return new Response(JSON.stringify({ success: true }), { status: 200 });
 }
 

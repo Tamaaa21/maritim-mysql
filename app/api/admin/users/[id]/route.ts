@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { hashPassword } from "@/lib/auth";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
@@ -47,6 +48,7 @@ export async function PATCH(req: Request, context: any) {
       .single();
 
     if (error) throw error;
+    logActivity(req.headers.get("x-auth-user"), `Mengubah pengguna: ${data?.username || id}`, req);
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error(error);
@@ -75,6 +77,7 @@ export async function DELETE(req: Request, context: any) {
       .single();
 
     if (error) throw error;
+    logActivity(req.headers.get("x-auth-user"), `Menghapus pengguna: ${data?.username || id}`, req);
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error(error);

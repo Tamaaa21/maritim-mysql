@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
@@ -98,6 +99,8 @@ export async function POST(req: Request) {
       }
       throw insertError;
     }
+
+    logActivity(req.headers.get("x-auth-user"), `Menambah dokumentasi kegiatan: ${title}`, req);
 
     return NextResponse.json({ success: true, data: insertData });
   } catch (error: any) {

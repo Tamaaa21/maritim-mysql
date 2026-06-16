@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/activity-log";
 
-export async function DELETE(_request: Request, context: any) {
+export async function DELETE(request: Request, context: any) {
   const params = (context && context.params) ? context.params : (context && typeof context === 'object' ? (context as any) : null);
   const id = params && params.id ? params.id : (typeof params?.then === 'function' ? (await params).id : undefined);
   const paramsId = id;
@@ -18,13 +19,15 @@ export async function DELETE(_request: Request, context: any) {
     const key = serviceKey || anonKey;
     const supabase = createClient(url, key as string);
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("buku_tamu")
       .delete()
-      .eq("id", paramsId);
+      .eq("id", paramsId)
+      .select();
 
     if (error) throw error;
 
+    logActivity(request.headers.get("x-auth-user"), `Menghapus data buku tamu`, request);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);

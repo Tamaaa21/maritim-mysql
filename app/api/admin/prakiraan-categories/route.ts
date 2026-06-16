@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export async function POST(req: Request) {
       }
       throw error;
     }
+    logActivity(req.headers.get("x-auth-user"), `Menambah kategori prakiraan: ${name}`, req);
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error(error);

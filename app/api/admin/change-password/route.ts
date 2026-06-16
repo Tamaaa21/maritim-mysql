@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { verifyPassword, hashPassword } from "@/lib/auth";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
@@ -56,6 +57,8 @@ export async function POST(request: NextRequest) {
       console.error("Update password error:", updateError);
       return NextResponse.json({ success: false, message: "Gagal memperbarui kata sandi di database" }, { status: 500 });
     }
+
+    logActivity(userId, "Mengubah kata sandi", request);
 
     return NextResponse.json({ success: true, message: "Kata sandi berhasil diperbarui" });
   } catch (error: any) {

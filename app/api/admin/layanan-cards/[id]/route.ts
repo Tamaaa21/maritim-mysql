@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,7 @@ export async function DELETE(req: Request, context: any) {
       .select();
 
     if (error) throw error;
+    logActivity(req.headers.get("x-auth-user"), `Menghapus layanan: ${(data?.[0] as any)?.nama_layanan || id}`, req);
     return NextResponse.json({ success: true, data: data?.[0] || null });
   } catch (error: any) {
     console.error("DELETE /api/admin/layanan-cards/[id] error:", error);
@@ -56,6 +58,7 @@ export async function PATCH(req: Request, context: any) {
       .single();
 
     if (error) throw error;
+    logActivity(req.headers.get("x-auth-user"), `Mengubah layanan: ${data?.nama_layanan || id}`, req);
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error("PATCH /api/admin/layanan-cards/[id] error:", error);

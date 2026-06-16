@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
@@ -93,6 +94,7 @@ export async function POST(req: Request) {
         .single();
 
       if (!error) {
+        logActivity(req.headers.get("x-auth-user"), `Menambah struktur organisasi: ${jabatan}`, req);
         return NextResponse.json({ success: true, data });
       }
       console.warn("Failed posting to Supabase struktur_organisasi, falling back to local:", error.message);
@@ -112,6 +114,7 @@ export async function POST(req: Request) {
     local.sort((a: any, b: any) => (a.urutan || 0) - (b.urutan || 0));
     writeLocal(local);
 
+    logActivity(req.headers.get("x-auth-user"), `Menambah struktur organisasi: ${jabatan}`, req);
     return NextResponse.json({ success: true, data: newEntry });
   } catch (error: any) {
     console.error("POST /api/admin/struktur-organisasi error:", error);

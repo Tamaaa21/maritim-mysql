@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, LogIn } from "lucide-react";
 import { Input } from '@/components/ui/input';
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,13 +17,20 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const recaptchaToken = recaptchaRef.current?.getValue();
+    if (!recaptchaToken) {
+      setError("Harap verifikasi bahwa Anda bukan robot");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, recaptchaToken }),
       });
 
       let data: any = null;
@@ -37,6 +46,7 @@ export default function AdminLoginPage() {
 
       if (!response.ok) {
         setError(data?.message || "Login gagal");
+        recaptchaRef.current?.reset();
         return;
       }
 
@@ -92,6 +102,13 @@ export default function AdminLoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Masukkan password"
               required
+            />
+          </div>
+
+          <div className="flex justify-center">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
             />
           </div>
 

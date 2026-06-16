@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
@@ -57,6 +58,7 @@ export async function POST(req: Request) {
       .single();
 
     if (error) throw error;
+    logActivity(req.headers.get("x-auth-user"), `Menambah layanan: ${nama_layanan}`, req);
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error("POST /api/admin/layanan-cards error:", error);

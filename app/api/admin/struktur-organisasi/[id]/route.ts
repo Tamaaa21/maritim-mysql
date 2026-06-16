@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
@@ -50,6 +51,7 @@ export async function PUT(req: Request, context: any) {
         .select();
 
       if (!error && data && data.length > 0) {
+        logActivity(req.headers.get("x-auth-user"), `Mengubah struktur organisasi: ${jabatan}`, req);
         return NextResponse.json({ success: true, data: data[0] });
       }
       console.warn(`Failed PUT to Supabase for ID ${id}, falling back to local:`, error?.message);
@@ -73,6 +75,7 @@ export async function PUT(req: Request, context: any) {
     local.sort((a: any, b: any) => (a.urutan || 0) - (b.urutan || 0));
     writeLocal(local);
 
+    logActivity(req.headers.get("x-auth-user"), `Mengubah struktur organisasi: ${jabatan}`, req);
     return NextResponse.json({ success: true, data: local[idx] });
   } catch (error: any) {
     console.error("PUT /api/admin/struktur-organisasi/[id] error:", error);
@@ -95,6 +98,7 @@ export async function DELETE(req: Request, context: any) {
         .eq("id", id);
 
       if (!error) {
+        logActivity(req.headers.get("x-auth-user"), `Menghapus struktur organisasi: ${id}`, req);
         return NextResponse.json({ success: true, message: "Data berhasil dihapus" });
       }
       console.warn(`Failed DELETE to Supabase for ID ${id}, falling back to local:`, error.message);
@@ -102,12 +106,14 @@ export async function DELETE(req: Request, context: any) {
 
     // Local fallback
     const local = readLocal();
+    const item = local.find((item: any) => item.id === id);
     const filtered = local.filter((item: any) => item.id !== id);
     if (local.length === filtered.length) {
       return NextResponse.json({ success: false, message: "Data tidak ditemukan" }, { status: 404 });
     }
     writeLocal(filtered);
 
+    logActivity(req.headers.get("x-auth-user"), `Menghapus struktur organisasi: ${item?.jabatan || id}`, req);
     return NextResponse.json({ success: true, message: "Data berhasil dihapus" });
   } catch (error: any) {
     console.error("DELETE /api/admin/struktur-organisasi/[id] error:", error);

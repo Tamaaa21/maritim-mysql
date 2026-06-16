@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET() {
   try {
@@ -50,10 +51,12 @@ export async function DELETE(req: Request) {
     if (ids.length > 0) {
       const { error } = await supabase.from("buku_tamu").delete().in("id", ids);
       if (error) throw error;
+      logActivity(req.headers.get("x-auth-user"), `Menghapus ${ids.length} data buku tamu`, req);
       return NextResponse.json({ success: true, message: "Data terpilih berhasil dihapus" });
     } else {
       const { error } = await supabase.from("buku_tamu").delete().neq("id", "0");
       if (error) throw error;
+      logActivity(req.headers.get("x-auth-user"), `Menghapus semua data buku tamu`, req);
       return NextResponse.json({ success: true, message: "Semua data berhasil dihapus" });
     }
   } catch (error: any) {
