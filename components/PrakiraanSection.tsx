@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronRight, MapPin, Anchor, Waves, TrendingUp, Sun, X, AlertCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ChevronRight, ChevronLeft, MapPin, Anchor, Waves, TrendingUp, Sun, X, AlertCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -10,6 +10,95 @@ const CATEGORY_ICONS: Record<string, any> = {
 
 function getIcon(name?: string) {
   return CATEGORY_ICONS[name || "Sun"] || Sun;
+}
+
+function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon }: {
+  categories: any[];
+  activeCategory: string | null;
+  setActiveCategory: (id: string | null) => void;
+  getIcon: (name?: string) => any;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (dir: "left" | "right") => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
+    }
+  };
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      setCanScrollLeft(scrollRef.current.scrollLeft > 0);
+      setCanScrollRight(scrollRef.current.scrollLeft < scrollRef.current.scrollWidth - scrollRef.current.clientWidth - 1);
+    }
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener("scroll", checkScroll);
+      checkScroll();
+      return () => el.removeEventListener("scroll", checkScroll);
+    }
+  }, []);
+
+  const btnClass = (isActive: boolean) =>
+    `inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
+      isActive
+        ? "bg-[#003399] text-white shadow-md"
+        : "bg-white text-gray-600 border border-gray-200 hover:border-[#003399] hover:text-[#003399]"
+    }`;
+
+  return (
+    <div className="relative mb-10">
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll("left")}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:bg-gray-50"
+          aria-label="Scroll left"
+        >
+          <ChevronLeft size={16} className="text-gray-600" />
+        </button>
+      )}
+      <div
+        ref={scrollRef}
+        className="flex gap-2 overflow-x-auto scrollbar-hide py-1 px-1 justify-center"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        <button
+          onClick={() => setActiveCategory(null)}
+          className={btnClass(!activeCategory)}
+        >
+          Semua
+        </button>
+        {categories.map((cat) => {
+          const Icon = getIcon(cat.icon);
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={btnClass(activeCategory === cat.id)}
+            >
+              <Icon size={14} />
+              {cat.name}
+            </button>
+          );
+        })}
+      </div>
+      {canScrollRight && (
+        <button
+          onClick={() => scroll("right")}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:bg-gray-50"
+          aria-label="Scroll right"
+        >
+          <ChevronRight size={16} className="text-gray-600" />
+        </button>
+      )}
+    </div>
+  );
 }
 
 const ExpiredPopup = ({
@@ -191,37 +280,9 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
           <p className="text-gray-500 mt-2">Pilih kategori informasi prakiraan yang Anda butuhkan</p>
         </div>
 
-        {/* Category Filter Tabs */}
+        {/* Category Slider */}
         {categories.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
-            <button
-              onClick={() => setActiveCategory(null)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                !activeCategory
-                  ? "bg-[#003399] text-white shadow-md"
-                  : "bg-white text-gray-600 border border-gray-200 hover:border-[#003399] hover:text-[#003399]"
-              }`}
-            >
-              Semua
-            </button>
-            {categories.map((cat) => {
-              const Icon = getIcon(cat.icon);
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                    activeCategory === cat.id
-                      ? "bg-[#003399] text-white shadow-md"
-                      : "bg-white text-gray-600 border border-gray-200 hover:border-[#003399] hover:text-[#003399]"
-                  }`}
-                >
-                  <Icon size={14} />
-                  {cat.name}
-                </button>
-              );
-            })}
-          </div>
+          <CategorySlider categories={categories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} getIcon={getIcon} />
         )}
 
         {loading ? (

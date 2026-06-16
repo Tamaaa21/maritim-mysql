@@ -11,7 +11,7 @@
     "id": "2",
     "jabatan": "Seksi Observasi",
     "nama": "",
-    "inisial": "O",
+    "inisial": "https://unfpyjpxcnbiurgffett.supabase.co/storage/v1/object/public/public/uploads/1781519918796_0v6m9a_seksi.png",
     "deskripsi": "Melakukan pengamatan, perekaman data cuaca maritim & instrumen meteorologi",
     "urutan": 2
   },
@@ -19,7 +19,7 @@
     "id": "4",
     "jabatan": "Struktual",
     "nama": "",
-    "inisial": "S",
+    "inisial": "https://unfpyjpxcnbiurgffett.supabase.co/storage/v1/object/public/public/uploads/1781519981438_4zldmp_struktural.png",
     "deskripsi": "Pelayanan jasa meteorologi, edukasi publik, dan hubungan kemitraan maritim",
     "urutan": 4
   },
@@ -27,7 +27,7 @@
     "id": "1781062285478",
     "jabatan": " Forecaster",
     "nama": "",
-    "inisial": "F",
+    "inisial": "https://unfpyjpxcnbiurgffett.supabase.co/storage/v1/object/public/public/uploads/1781519779363_5su46b_forecaster.png",
     "deskripsi": "Melakukan analisis dan prakiraan kondisi cuaca, iklim, serta gelombang laut berdasarkan data pengamatan dan model numerik. ",
     "urutan": 5
   },
@@ -35,7 +35,7 @@
     "id": "3",
     "jabatan": "Seksi Data & Informasi",
     "nama": "",
-    "inisial": "D",
+    "inisial": "https://unfpyjpxcnbiurgffett.supabase.co/storage/v1/object/public/public/uploads/1781520051458_eq38h1_info.png",
     "deskripsi": "Mengolah database, analisis klimatologi, dan penyebaran informasi cuaca",
     "urutan": 6
   }

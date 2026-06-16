@@ -11,16 +11,6 @@ const ALLOWED_FIELDS = [
   "uploader",
 ];
 
-function getId(req: Request, context: any): string | undefined {
-  try {
-    const params = context?.params;
-    if (params?.id) return params.id;
-    return undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 function sanitize(body: any): Record<string, any> {
   const clean: Record<string, any> = {};
   for (const key of ALLOWED_FIELDS) {
@@ -31,7 +21,8 @@ function sanitize(body: any): Record<string, any> {
 
 export async function GET(req: Request, context: any) {
   try {
-    const id = getId(req, context);
+    const params = await context.params;
+    const id = params?.id;
     if (!id) return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -50,7 +41,8 @@ export async function GET(req: Request, context: any) {
 
 export async function DELETE(req: Request, context: any) {
   try {
-    const id = getId(req, context);
+    const params = await context.params;
+    const id = params?.id;
     if (!id) return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -68,7 +60,8 @@ export async function DELETE(req: Request, context: any) {
 
 export async function PATCH(req: Request, context: any) {
   try {
-    const id = getId(req, context);
+    const params = await context.params;
+    const id = params?.id;
     if (!id) return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
     const body = await req.json();
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
