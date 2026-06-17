@@ -4,6 +4,17 @@ import { COOKIE_NAME, verifySessionToken } from "@/lib/auth-edge";
 
 const PUBLIC_ADMIN_PATHS = ["/api/admin/login"];
 
+const PUBLIC_GET_PATHS = [
+  "/api/admin/hero-images",
+  "/api/admin/publications",
+  "/api/admin/prakiraan-images",
+  "/api/admin/prakiraan-categories",
+  "/api/admin/layanan-cards",
+  "/api/admin/kegiatan-documents",
+  "/api/admin/struktur-organisasi",
+  "/api/admin/pamflets",
+];
+
 const ALLOWED_ROLES_FOR_DELETE = ["super_admin", "admin"];
 
 export async function proxy(request: NextRequest) {
@@ -17,6 +28,11 @@ export async function proxy(request: NextRequest) {
 
   // Allow public admin paths (login) and logout
   if (PUBLIC_ADMIN_PATHS.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // Allow public GET read-only requests for website content
+  if (method === "GET" && PUBLIC_GET_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
     return NextResponse.next();
   }
 

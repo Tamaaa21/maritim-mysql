@@ -96,7 +96,7 @@ export default function StrukturOrganisasiPage() {
                     </div>
                     
                     {/* Connecting Line Down from Leader */}
-                    {staff.length > 0 && <div className="w-0.5 h-12 bg-gray-300"></div>}
+                    {staff.length > 0 && <div className="hidden md:block w-0.5 h-12 bg-gray-300"></div>}
                   </div>
                 )}
 

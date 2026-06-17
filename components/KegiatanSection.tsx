@@ -314,7 +314,7 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
 
           {/* Right: Details Side Panel */}
           <div
-            className="w-full md:w-96 md:h-full bg-[#0d1527]/95 border-t md:border-t-0 md:border-l border-slate-800/80 p-6 md:p-8 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.3)] md:shadow-[-10px_0_30px_rgba(0,0,0,0.3)] flex flex-col justify-start text-left overflow-y-auto shrink-0"
+            className="w-full h-[50vh] md:h-full max-h-[50vh] md:max-h-none md:w-96 bg-[#0d1527]/95 border-t md:border-t-0 md:border-l border-slate-800/80 p-6 md:p-8 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.3)] md:shadow-[-10px_0_30px_rgba(0,0,0,0.3)] flex flex-col justify-start text-left overflow-y-auto shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-wrap items-center gap-3 mb-3 shrink-0">

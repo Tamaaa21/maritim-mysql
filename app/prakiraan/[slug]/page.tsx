@@ -236,7 +236,7 @@ export default function PrakiraanDetailPage() {
               <div className="flex flex-col">
                 {/* TOP: Image & Gallery Slider */}
                 <div className="w-full bg-white border-y border-gray-100 flex flex-col items-center">
-                  <div className="relative w-full flex items-center justify-center bg-gray-50/30" style={{ minHeight: "500px" }}>
+                  <div className="relative w-full flex items-center justify-center bg-gray-50/30 min-h-[260px] sm:min-h-[400px] md:min-h-[500px]">
                     <img
                       src={allImages[activeImg]}
                       alt={data.title}

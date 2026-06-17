@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, ChevronLeft, MapPin, Anchor, Waves, TrendingUp, Sun, X, AlertCircle } from "lucide-react";
+import { ChevronRight, ChevronLeft, MapPin, Anchor, Waves, TrendingUp, Sun, X, AlertCircle, Calendar } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -65,7 +65,7 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
       )}
       <div
         ref={scrollRef}
-        className="flex gap-2 overflow-x-auto scrollbar-hide py-1 px-1 justify-center"
+        className="flex gap-2 overflow-x-auto scrollbar-hide py-1 px-1 justify-start md:justify-center"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         <button
@@ -301,7 +301,7 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
                 <button
                   key={card.id || i}
                   onClick={() => handleCardClick(card)}
-                  className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-[#003399] transition-all duration-300 group flex flex-col text-left h-full relative"
+                  className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-[#003399] transition-all duration-300 group flex flex-col text-left h-full relative"
                 >
                   <div className="relative h-44 w-full overflow-hidden flex-shrink-0">
                     <img
@@ -322,12 +322,19 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
 
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-bold text-sm md:text-base mb-2 leading-snug line-clamp-2 text-gray-900 group-hover:text-[#003399] transition-colors">
+                      <h3 className="font-bold text-sm md:text-base mb-1.5 leading-snug line-clamp-2 text-gray-900 group-hover:text-[#003399] transition-colors capitalize">
                         {card.title}
                       </h3>
-                      <p className="text-gray-500 text-xs leading-relaxed line-clamp-3">
-                        {card.explanation ? card.explanation.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ') : ""}
-                      </p>
+                      <div className="flex items-center gap-1.5 text-gray-400 text-xs mt-2">
+                        <Calendar size={13} className="shrink-0 text-[#003399]" />
+                        <span>
+                          {card.waktu_mulai 
+                            ? new Date(card.waktu_mulai).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+                            : card.created_at 
+                              ? new Date(card.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+                              : "-"}
+                        </span>
+                      </div>
                       {card.next_url && (
                         <div className="mt-3 flex items-center gap-2 text-[10px] text-blue-600 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse inline-block flex-shrink-0" />

@@ -96,13 +96,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { unreadBukuTamu, resetUnreadBukuTamu } = useAdminRealtime();
   useSessionTimeout();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserInfo | null>(null);
 
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
   const userInitial = user?.nama?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || "A";
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;

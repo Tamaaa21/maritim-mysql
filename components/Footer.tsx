@@ -142,7 +142,7 @@ export default function Footer() {
             </div>
 
             {/* Links */}
-            <div className="lg:col-span-5 grid grid-cols-3 gap-6">
+            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 gap-6">
               {Object.entries(footerLinks).map(([category, links]) => (
                 <div key={category}>
                   <h4 className="text-white font-bold text-sm mb-4 pb-2 border-b border-white/20">{category}</h4>
