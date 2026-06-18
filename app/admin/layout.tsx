@@ -20,7 +20,7 @@ import {
   ConciergeBell,
   Clock,
   Network,
-  Bell
+  Bell,
 } from "lucide-react";
 import { AdminRealtimeProvider, useAdminRealtime } from "@/components/AdminRealtimeProvider";
 import { Toaster } from "@/components/ui/sonner";
@@ -85,17 +85,21 @@ const ADMIN_ONLY_PATHS = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-      <AdminRealtimeProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-      </AdminRealtimeProvider>
+    <AdminRealtimeProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AdminRealtimeProvider>
   );
+}
+
+function SessionTimeoutActive() {
+  useSessionTimeout();
+  return null;
 }
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { unreadBukuTamu, resetUnreadBukuTamu } = useAdminRealtime();
-  useSessionTimeout();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -181,6 +185,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <AdminUserContext.Provider value={{ user, isAdmin: isAdmin, isLoggedIn }}>
+    <SessionTimeoutActive />
     <div className="flex h-screen bg-blue-50/30">
       {/* Sidebar */}
       <aside

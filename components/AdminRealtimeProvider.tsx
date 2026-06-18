@@ -1,13 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
-import supabase from "@/lib/supabaseBrowser";
 import { toast } from "sonner";
 
 interface Stats {
   bukuTamu: number;
-  layananBerbayar: number;
-  layananNolRupiah: number;
 }
 
 interface AdminRealtimeContextType {
@@ -16,7 +13,7 @@ interface AdminRealtimeContextType {
   resetUnreadBukuTamu: () => void;
 }
 
-const DEFAULT_STATS: Stats = { bukuTamu: 0, layananBerbayar: 0, layananNolRupiah: 0 };
+const DEFAULT_STATS: Stats = { bukuTamu: 0 };
 
 const AdminRealtimeContext = createContext<AdminRealtimeContextType | undefined>(undefined);
 
@@ -24,6 +21,7 @@ export function AdminRealtimeProvider({ children }: { children: React.ReactNode 
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS);
   const [unreadBukuTamu, setUnreadBukuTamu] = useState(0);
   const previousBukuCountRef = useRef(0);
+  const initialisedRef = useRef(false);
 
   const resetUnreadBukuTamu = useCallback(() => setUnreadBukuTamu(0), []);
 
@@ -38,39 +36,18 @@ export function AdminRealtimeProvider({ children }: { children: React.ReactNode 
   }, []);
 
   useEffect(() => {
-    const client = supabase;
+    if (initialisedRef.current) return;
+    initialisedRef.current = true;
+
     let pollingTimer: ReturnType<typeof setInterval> | null = null;
 
     const fetchInitial = async () => {
       try {
-        const paths = [
-          "/api/admin/stats/buku-tamu",
-          "/api/admin/stats/layanan-berbayar",
-          "/api/admin/stats/layanan-nol-rupiah",
-        ];
-
-        const [bukuRes, berbayarRes, nolRes] = await Promise.all(paths.map(p => fetch(p)));
-
-        if (!bukuRes.ok || !berbayarRes.ok || !nolRes.ok) {
-          console.warn("Failed to fetch admin stats:", {
-            buku: bukuRes.status,
-            berbayar: berbayarRes.status,
-            nol: nolRes.status,
-          });
-        }
-
-        const buku = await bukuRes.json().catch(() => ({ count: 0 }));
-        const berbayar = await berbayarRes.json().catch(() => ({ count: 0 }));
-        const nol = await nolRes.json().catch(() => ({ count: 0 }));
-
+        const res = await fetch("/api/admin/stats/buku-tamu");
+        const buku = await res.json().catch(() => ({ count: 0 }));
         const bukuCount = typeof buku.count === "number" ? buku.count : 0;
         previousBukuCountRef.current = bukuCount;
-
-        setStats({
-          bukuTamu: bukuCount,
-          layananBerbayar: typeof berbayar.count === "number" ? berbayar.count : 0,
-          layananNolRupiah: typeof nol.count === "number" ? nol.count : 0,
-        });
+        setStats({ bukuTamu: bukuCount });
       } catch (e) {
         console.error("Error fetching initial admin stats:", e);
       }
@@ -78,7 +55,6 @@ export function AdminRealtimeProvider({ children }: { children: React.ReactNode 
 
     fetchInitial();
 
-    // Polling fallback — check every 30s for new buku_tamu entries
     pollingTimer = setInterval(async () => {
       try {
         const res = await fetch("/api/admin/stats/buku-tamu");
@@ -96,35 +72,8 @@ export function AdminRealtimeProvider({ children }: { children: React.ReactNode 
       }
     }, 30000);
 
-    // Supabase Realtime subscriptions
-    if (!client) return () => { if (pollingTimer) clearInterval(pollingTimer); };
-
-    const subs: any[] = [];
-    const subscribeTo = (table: string, updater?: () => void) => {
-      try {
-        const ch = client
-          .channel(`global-realtime:${table}`)
-          .on("postgres_changes", { event: "INSERT", schema: "public", table }, () => {
-            if (updater) updater();
-          })
-          .subscribe();
-        subs.push(ch);
-      } catch (e) {
-        // ignore
-      }
-    };
-
-    subscribeTo("buku_tamu", onNewBukuTamu);
-    subscribeTo("layanan_berbayar", () => setStats(s => ({ ...s, layananBerbayar: s.layananBerbayar + 1 })));
-    subscribeTo("layanan_nol_rupiah", () => setStats(s => ({ ...s, layananNolRupiah: s.layananNolRupiah + 1 })));
-
     return () => {
       if (pollingTimer) clearInterval(pollingTimer);
-      try {
-        subs.forEach(ch => client.removeChannel(ch));
-      } catch (e) {
-        try { subs.forEach(ch => ch.unsubscribe && ch.unsubscribe()); } catch {}
-      }
     };
   }, [onNewBukuTamu]);
 
