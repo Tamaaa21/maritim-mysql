@@ -1,16 +1,9 @@
 "use client";
 
-import { ChevronRight, ChevronLeft, MapPin, Anchor, Waves, TrendingUp, Sun, X, AlertCircle, Calendar, ArrowRight, ArrowLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, X, AlertCircle, Calendar, ArrowRight, ArrowLeft } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-
-const CATEGORY_ICONS: Record<string, any> = {
-  MapPin, Anchor, Waves, TrendingUp, Sun,
-};
-
-function getIcon(name?: string) {
-  return CATEGORY_ICONS[name || "Sun"] || Sun;
-}
+import { getIcon } from "@/lib/prakiraan-icons";
 
 function getEndDateColor(waktuBerakhir: string) {
   const now = new Date();

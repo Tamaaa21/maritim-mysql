@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { ok, serverError } from "@/lib/response";
+import { okCached, serverError } from "@/lib/response";
 
 export const runtime = "nodejs";
 
@@ -12,7 +12,7 @@ export async function GET() {
       .order("urutan", { ascending: true });
 
     if (error) throw error;
-    return ok(data || []);
+    return okCached(data || []);
   } catch (error) {
     return serverError(error);
   }

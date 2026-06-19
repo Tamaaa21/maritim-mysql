@@ -5,6 +5,7 @@ import { LogIn, Clock, Search, ChevronLeft, ChevronRight, Download, Monitor, Glo
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import AdminPagination from '@/components/AdminPagination';
 
 interface LoginLog {
   id: string;
@@ -329,72 +330,14 @@ export default function LoginHistoryPage() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500">
-                  Halaman <span className="font-bold text-gray-900">{safePage}</span> dari{" "}
-                  <span className="font-bold text-gray-900">{totalPages}</span>{" "}
-                  &bull; {filtered.length} total catatan
-                </p>
-
-                <div className="flex flex-wrap items-center gap-1.5 justify-center sm:justify-start mt-3 sm:mt-0">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={safePage === 1}
-                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-
-                  {/* Sliding window pagination */}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(p => {
-                      if (totalPages <= 7) return true;
-                      if (p === 1 || p === totalPages) return true;
-                      if (Math.abs(p - safePage) <= 2) return true;
-                      return false;
-                    })
-                    .reduce<(number | "...")[]>((acc, p, i, arr) => {
-                      if (i > 0 && typeof arr[i - 1] === "number" && (p as number) - (arr[i - 1] as number) > 1) acc.push("...");
-                      acc.push(p);
-                      return acc;
-                    }, [])
-                    .map((p, i) =>
-                      p === "..." ? (
-                        <span key={`ellipsis-${i}`} className="px-2 py-1.5 text-xs text-gray-400 font-medium">…</span>
-                      ) : (
-                        <button
-                          key={p}
-                          onClick={() => setCurrentPage(p as number)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                            p === safePage
-                              ? "bg-[#003399] text-white shadow-sm"
-                              : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      )
-                    )}
-
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={safePage === totalPages}
-                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-
-                  <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(parseInt(e.target.value, 10)); setCurrentPage(1); }}
-                    className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-600 focus:outline-none">
-                    <option value={10}>10 data</option>
-                    <option value={20}>20 data</option>
-                    <option value={50}>50 data</option>
-                  </select>
-                </div>
-              </div>
-            )}
+            <AdminPagination
+              currentPage={safePage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={filtered.length}
+              itemsPerPage={itemsPerPage}
+              onItemsPerPageChange={(count) => { setItemsPerPage(count); setCurrentPage(1); }}
+            />
           </>
         )}
       </div>

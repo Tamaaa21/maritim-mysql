@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { logActivity } from "@/lib/activity-log";
+import { okCached, serverError } from "@/lib/response";
 import type { PrakiraanCategory } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -17,14 +18,14 @@ export async function GET() {
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !serviceKey) return NextResponse.json({ success: false, data: [] }, { status: 500 });
+    if (!url || !serviceKey) return okCached([]);
     const supabase = createClient(url, serviceKey as string);
     const { data, error } = await supabase.from("prakiraan_categories").select("*").order("name", { ascending: true });
     if (error) throw error;
-    return NextResponse.json({ success: true, data: (data || []) as PrakiraanCategory[] });
+    return okCached((data || []) as PrakiraanCategory[]);
   } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });
+    return serverError(error);
   }
 }
 

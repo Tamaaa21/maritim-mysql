@@ -1,6 +1,6 @@
 "use client";
 
-import PamfletManager from "./PamfletManager";
+import DisplaySlideManager from "./DisplaySlideManager";
 
 export default function DisplayManager() {
   return (
@@ -15,7 +15,7 @@ export default function DisplayManager() {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <h2 className="text-xl font-bold text-gray-900 mb-1">Daftar Display</h2>
         <p className="text-gray-500 text-sm mb-4">Tambahkan atau kelola gambar Display di sini.</p>
-        <PamfletManager />
+        <DisplaySlideManager />
       </div>
     </div>
   );

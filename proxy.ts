@@ -12,7 +12,7 @@ const PUBLIC_GET_PATHS = [
   "/api/admin/layanan-cards",
   "/api/admin/kegiatan-documents",
   "/api/admin/struktur-organisasi",
-  "/api/admin/pamflets",
+  "/api/admin/display",
   "/api/admin/stats/buku-tamu",
 ];
 

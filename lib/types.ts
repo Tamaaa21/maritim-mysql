@@ -129,7 +129,7 @@ export interface StrukturOrganisasi {
   created_at: string;
 }
 
-export interface Pamflet {
+export interface DisplaySlide {
   id: string;
   title: string;
   url: string;

@@ -4,15 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ArrowLeft, Calendar, User, AlertCircle, Clock, Loader, MapPin, Anchor, Waves, TrendingUp, Sun, Image, ChevronLeft, ChevronRight, X } from "lucide-react";
-
-const CATEGORY_ICONS: Record<string, any> = {
-  MapPin, Anchor, Waves, TrendingUp, Sun,
-};
-
-function getIcon(name?: string) {
-  return CATEGORY_ICONS[name || "Sun"] || Sun;
-}
+import { ArrowLeft, Calendar, AlertCircle, Clock, Loader, ChevronLeft, ChevronRight, X, Waves, TrendingUp } from "lucide-react";
+import { getIcon } from "@/lib/prakiraan-icons";
 
 interface PrakiraanDetail {
   id: string;

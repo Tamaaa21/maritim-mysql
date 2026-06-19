@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { isVideoUrl } from "@/lib/utils";
 
 const defaultImages: string[] = [];
-const isVideoUrl = (url: string) => {
-  return !!(url && (url.match(/\.(mp4|webm|ogg|mov|mkv|avi|3gp|flv|wmv)/i) || url.includes("video")));
-};
 
 export default function HeroBackgroundSlideshow({ onImageChange }: { onImageChange?: (index: number) => void }) {
   const [current, setCurrent] = useState(0);

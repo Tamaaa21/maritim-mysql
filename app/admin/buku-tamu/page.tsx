@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import AdminPagination from '@/components/AdminPagination';
 
 interface BukuTamuEntry {
   id: string;
@@ -427,48 +428,14 @@ export default function BukuTamuPage() {
                   </tbody>
                 </table>
                 
-                {totalPages > 1 && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100 gap-4">
-                    <div className="text-xs md:text-sm text-gray-500">
-                      Menampilkan <span className="font-semibold">{indexOfFirstItem + 1}</span> - <span className="font-semibold">{Math.min(indexOfLastItem, filtered.length)}</span> dari <span className="font-semibold">{filtered.length}</span> data
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Sebelumnya
-                      </button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`px-3 py-1.5 border rounded-lg text-xs md:text-sm font-medium transition-colors ${
-                            currentPage === page
-                              ? "bg-[#003399] border-[#003399] text-white"
-                              : "border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Selanjutnya
-                      </button>
-                      <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(parseInt(e.target.value, 10)); setCurrentPage(1); }}
-                        className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-600 focus:outline-none">
-                        <option value={10}>10 data</option>
-                        <option value={20}>20 data</option>
-                        <option value={50}>50 data</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
+                <AdminPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filtered.length}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={(count) => { setItemsPerPage(count); setCurrentPage(1); }}
+                />
               </div>
             );
           })()

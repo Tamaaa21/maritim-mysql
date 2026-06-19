@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 
-export function ok<T>(data: T, message?: string) {
-  return NextResponse.json({ success: true, data, message }, { status: 200 });
+export function ok<T>(data: T, message?: string, cacheMaxAge?: number) {
+  const headers: Record<string, string> = {};
+  if (cacheMaxAge) {
+    headers["Cache-Control"] = `public, s-maxage=${cacheMaxAge}, stale-while-revalidate=${cacheMaxAge * 2}`;
+  }
+  return NextResponse.json({ success: true, data, message }, { status: 200, headers });
+}
+
+export function okCached<T>(data: T, message?: string) {
+  return ok(data, message, 60);
 }
 
 export function created<T>(data: T, message?: string) {

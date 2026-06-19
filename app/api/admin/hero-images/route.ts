@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { uploadFile } from "@/lib/upload";
 import { logActivity } from "@/lib/activity-log";
-import { ok, badRequest, serverError } from "@/lib/response";
+import { okCached, ok, badRequest, serverError } from "@/lib/response";
 import type { HeroImage } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -45,7 +45,7 @@ export async function GET() {
       .order("order_index", { ascending: true });
 
     if (error) throw error;
-    return ok(data as HeroImage[]);
+    return okCached(data as HeroImage[]);
   } catch (error) {
     return serverError(error);
   }

@@ -24,6 +24,8 @@ import {
   Volume2,
   VolumeX
 } from "lucide-react";
+import { isVideoUrl } from "@/lib/utils";
+import { getYoutubeVideoId, isYoutubeUrl } from "@/lib/youtube";
 
 interface WeatherData {
   city: string;
@@ -52,37 +54,6 @@ interface GempaData {
   Dirasakan: string;
   Shakemap: string;
 }
-
-const isVideoUrl = (url: string) => {
-  return !!(url && (url.match(/\.(mp4|webm|ogg|mov|mkv|avi|3gp|flv|wmv)/i) || url.includes("video")));
-};
-
-const getYoutubeVideoId = (url: string) => {
-  if (!url) return null;
-  let videoId: string | null = null;
-  
-  if (url.includes('/shorts/')) {
-    const parts = url.split('/shorts/');
-    if (parts[1]) {
-      videoId = parts[1].split(/[?&#]/)[0];
-    }
-  } else {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      videoId = match[2];
-    }
-  }
-
-  if (videoId && videoId.length === 11) {
-    return videoId;
-  }
-  return null;
-};
-
-const isYoutubeUrl = (url: string) => {
-  return !!getYoutubeVideoId(url);
-};
 
 export default function DisplayPage() {
   const [pamphletImages, setPamphletImages] = useState<string[]>([]);
@@ -128,7 +99,7 @@ export default function DisplayPage() {
     async function fetchPamflets() {
       try {
         setLoading(true);
-        const res = await fetch("/api/admin/pamflets");
+        const res = await fetch("/api/admin/display");
         const j = await res.json();
         if (mounted && j?.success && Array.isArray(j.data)) {
           const urls = j.data.map((it: any) => it.url).filter(Boolean);

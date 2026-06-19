@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logActivity } from "@/lib/activity-log";
 import { layananCardSchema } from "@/lib/validation";
-import { ok, badRequest, serverError } from "@/lib/response";
+import { okCached, ok, badRequest, serverError } from "@/lib/response";
 import type { LayananCard } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -16,7 +16,7 @@ export async function GET() {
       .order("created_at", { ascending: true });
 
     if (error) throw error;
-    return ok(data as LayananCard[]);
+    return okCached(data as LayananCard[]);
   } catch (error) {
     return serverError(error);
   }

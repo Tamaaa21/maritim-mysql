@@ -6,39 +6,10 @@ import { Input } from '@/components/ui/input';
 import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 import { CardGridSkeleton } from '@/components/LoadingSkeleton';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import { isVideoUrl } from '@/lib/utils';
+import { getYoutubeEmbedUrl, isYoutubeUrl } from '@/lib/youtube';
 
-const isVideoUrl = (url: string) => {
-  return !!(url && (url.match(/\.(mp4|webm|ogg|mov|mkv|avi|3gp|flv|wmv)/i) || url.includes("video")));
-};
-
-const getYoutubeEmbedUrl = (url: string) => {
-  if (!url) return null;
-  let videoId: string | null = null;
-  
-  if (url.includes('/shorts/')) {
-    const parts = url.split('/shorts/');
-    if (parts[1]) {
-      videoId = parts[1].split(/[?&#]/)[0];
-    }
-  } else {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      videoId = match[2];
-    }
-  }
-
-  if (videoId && videoId.length === 11) {
-    return `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=1&loop=1&playlist=${videoId}&controls=0&rel=0&showinfo=0&iv_load_policy=3`;
-  }
-  return null;
-};
-
-const isYoutubeUrl = (url: string) => {
-  return !!getYoutubeEmbedUrl(url);
-};
-
-export default function PamfletManager() {
+export default function DisplaySlideManager() {
   const { isAdmin } = useAdminUser();
   const [items, setItems] = useState<any[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -53,7 +24,7 @@ export default function PamfletManager() {
     setLoading(true);
     setDbError(null);
     try {
-      const r = await fetch('/api/admin/pamflets');
+      const r = await fetch('/api/admin/display');
       const j = await r.json();
       if (j?.success) {
         setItems(j.data);
@@ -75,7 +46,7 @@ export default function PamfletManager() {
       const form = new FormData();
       if (file) form.append('file', file);
       if (addingUrl) form.append('url', addingUrl);
-      form.append('title', 'Pamflet');
+      form.append('title', 'Display');
       // If waktu_berakhir is set, convert date to end-of-day ISO
       if (waktuBerakhir) {
         try {
@@ -85,7 +56,7 @@ export default function PamfletManager() {
           }
         } catch (e) { }
       }
-      const r = await fetch('/api/admin/pamflets', { method: 'POST', body: form });
+      const r = await fetch('/api/admin/display', { method: 'POST', body: form });
       const j = await r.json();
       if (j?.success) {
         setFile(null);
@@ -106,7 +77,7 @@ export default function PamfletManager() {
     const isConfirmed = await showConfirm('Hapus Display?', 'Apakah Anda yakin ingin menghapus display ini?');
     if (!isConfirmed.isConfirmed) return;
     try {
-      const r = await fetch(`/api/admin/pamflets?id=${id}`, { method: 'DELETE' });
+      const r = await fetch(`/api/admin/display?id=${id}`, { method: 'DELETE' });
       const j = await r.json();
       if (j?.success) {
         showSuccess('Berhasil!', 'Display telah dihapus.');
@@ -121,7 +92,7 @@ export default function PamfletManager() {
 
   const handleReorder = async (id: string, direction: 'up' | 'down') => {
     try {
-      const r = await fetch('/api/admin/pamflets', {
+      const r = await fetch('/api/admin/display', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, direction }),
@@ -162,7 +133,7 @@ export default function PamfletManager() {
     setDraggedIndex(null);
     try {
       const itemIds = items.map((item) => item.id);
-      const r = await fetch('/api/admin/pamflets', {
+      const r = await fetch('/api/admin/display', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: itemIds }),

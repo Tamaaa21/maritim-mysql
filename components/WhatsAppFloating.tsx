@@ -15,7 +15,7 @@ export default function WhatsAppFloating() {
   }, []);
 
   useEffect(() => {
-    if (pathname && (pathname.startsWith("/admin") || pathname === "/display" || pathname === "/dislay" || pathname === "/buku_tamu")) {
+    if (pathname && (pathname.startsWith("/admin") || pathname === "/display" || pathname === "/buku_tamu")) {
       setHidden(true);
     } else {
       setHidden(false);

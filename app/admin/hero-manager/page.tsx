@@ -5,10 +5,7 @@ import { Upload, X, GripVertical } from "lucide-react";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { CardGridSkeleton } from '@/components/LoadingSkeleton';
 import { useAdminUser } from '@/hooks/useAdminUser';
-
-const isVideoUrl = (url: string) => {
-  return !!(url && (url.match(/\.(mp4|webm|ogg|mov|mkv|avi|3gp|flv|wmv)/i) || url.includes("video")));
-};
+import { isVideoUrl } from '@/lib/utils';
 
 export default function HeroManager() {
   const { isAdmin } = useAdminUser();

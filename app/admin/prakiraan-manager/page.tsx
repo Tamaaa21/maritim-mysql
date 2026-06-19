@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import dynamic from "next/dynamic";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import AdminPagination from '@/components/AdminPagination';
 import "react-quill-new/dist/quill.snow.css";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -551,30 +552,14 @@ export default function PrakiraanManager() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 0 && (
-          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-xs text-gray-500 font-medium">
-              Menampilkan {Math.min(filteredItems.length, (currentPage - 1) * itemsPerPage + 1)}–{Math.min(filteredItems.length, currentPage * itemsPerPage)} dari {filteredItems.length} data
-            </span>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-white font-semibold hover:bg-gray-50 disabled:opacity-40 transition-colors">‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button key={p} onClick={() => setCurrentPage(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${p === currentPage ? "bg-[#003399] text-white" : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"}`}>{p}</button>
-              ))}
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-white font-semibold hover:bg-gray-50 disabled:opacity-40 transition-colors">›</button>
-              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(parseInt(e.target.value, 10))}
-                className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-600 focus:outline-none">
-                <option value={5}>5 data</option>
-                <option value={10}>10 data</option>
-                <option value={20}>20 data</option>
-              </select>
-            </div>
-          </div>
-        )}
+        <AdminPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredItems.length}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={(count) => { setItemsPerPage(count); setCurrentPage(1); }}
+        />
       </div>
 
       {/* ─── ADD/EDIT MODAL ─────────────────────────────────── */}

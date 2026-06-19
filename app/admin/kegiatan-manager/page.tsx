@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { CardGridSkeleton } from '@/components/LoadingSkeleton';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import AdminPagination from '@/components/AdminPagination';
 
 export default function KegiatanManager() {
   const { isAdmin } = useAdminUser();
@@ -246,42 +247,13 @@ export default function KegiatanManager() {
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-          <span className="text-xs text-gray-500 font-medium">
-            Menampilkan {Math.min(items.length, (currentPage - 1) * itemsPerPage + 1)}–{Math.min(items.length, currentPage * itemsPerPage)} dari {items.length} data
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-white font-semibold hover:bg-gray-50 disabled:opacity-40 transition-colors"
-            >
-              ‹
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setCurrentPage(p)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  p === currentPage
-                    ? "bg-[#003399] text-white"
-                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-white font-semibold hover:bg-gray-50 disabled:opacity-40 transition-colors"
-            >
-              ›
-            </button>
-          </div>
-        </div>
-      )}
+      <AdminPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={items.length}
+        itemsPerPage={itemsPerPage}
+      />
     </div>
   );
 }

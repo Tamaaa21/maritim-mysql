@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { uploadMultipleFiles } from "@/lib/upload";
 import { logActivity } from "@/lib/activity-log";
-import { ok, badRequest, serverError } from "@/lib/response";
+import { ok, okCached, badRequest, serverError } from "@/lib/response";
 import type { KegiatanDocument } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -98,7 +98,7 @@ export async function GET() {
       }
       throw error;
     }
-    return ok(data as KegiatanDocument[]);
+    return okCached(data as KegiatanDocument[]);
   } catch (error) {
     return serverError(error);
   }

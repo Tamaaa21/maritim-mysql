@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { uploadFile } from "@/lib/upload";
 import { logActivity } from "@/lib/activity-log";
 import { ok, badRequest, notFound, serverError } from "@/lib/response";
-import type { Pamflet } from "@/lib/types";
+import type { DisplaySlide } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ function handleDbError(error: any) {
   if (msg.includes("Could not find the table") || msg.includes("does not exist")) {
     return NextResponse.json({
       success: false,
-      message: "Tabel pamflets belum dibuat di database. Jalankan migration SQL di Supabase dashboard.",
+      message: "Tabel display belum dibuat di database. Jalankan migration SQL di Supabase dashboard.",
     }, { status: 500 });
   }
   return null;
@@ -23,7 +23,7 @@ export async function GET() {
   try {
     const supabase: any = getSupabaseAdmin();
     const { data, error } = await supabase
-      .from("pamflets")
+      .from("display")
       .select("*")
       .order("order", { ascending: true });
 
@@ -32,7 +32,7 @@ export async function GET() {
       if (dbErr) return dbErr;
       throw error;
     }
-    return ok(data as Pamflet[]);
+    return ok(data as DisplaySlide[]);
   } catch (error) {
     const dbErr = handleDbError(error);
     if (dbErr) return dbErr;
@@ -53,15 +53,14 @@ export async function POST(req: Request) {
 
     let storedUrl = url;
     if (file && file.size) {
-      const result = await uploadFile(file, "pamflets");
+      const result = await uploadFile(file, "display");
       storedUrl = result.url;
     }
 
     if (!storedUrl) return badRequest("No file or url provided");
 
-    // Get next order
     const { data: existing, error: existingError } = await supabase
-      .from("pamflets")
+      .from("display")
       .select("order")
       .order("order", { ascending: false })
       .limit(1);
@@ -74,7 +73,7 @@ export async function POST(req: Request) {
     const nextOrder = (existing && existing.length > 0 ? existing[0].order : 0) + 1;
 
     const { data, error } = await supabase
-      .from("pamflets")
+      .from("display")
       .insert({ title, url: storedUrl, order: nextOrder, uploader: uploader || null, waktu_berakhir })
       .select()
       .single();
@@ -84,8 +83,8 @@ export async function POST(req: Request) {
       if (dbErr) return dbErr;
       throw error;
     }
-    logActivity(req.headers.get("x-auth-user-id"), `Menambah pamflet: ${title}`, req.headers.get("x-auth-user-username"));
-    return ok(data as Pamflet);
+    logActivity(req.headers.get("x-auth-user-id"), `Menambah display: ${title}`, req.headers.get("x-auth-user-username"));
+    return ok(data as DisplaySlide);
   } catch (error) {
     const dbErr = handleDbError(error);
     if (dbErr) return dbErr;
@@ -101,7 +100,7 @@ export async function DELETE(req: Request) {
 
     const supabase: any = getSupabaseAdmin();
     const { data, error } = await supabase
-      .from("pamflets")
+      .from("display")
       .delete()
       .eq("id", id)
       .select()
@@ -117,9 +116,8 @@ export async function DELETE(req: Request) {
     }
     if (!data) return notFound();
 
-    // Reassign order for remaining items
     const { data: remaining, error: remainingError } = await supabase
-      .from("pamflets")
+      .from("display")
       .select("*")
       .order("order", { ascending: true });
 
@@ -131,14 +129,14 @@ export async function DELETE(req: Request) {
     if (remaining && remaining.length > 0) {
       for (let i = 0; i < remaining.length; i++) {
         await supabase
-          .from("pamflets")
+          .from("display")
           .update({ order: i + 1 })
           .eq("id", remaining[i].id);
       }
     }
 
-    logActivity(req.headers.get("x-auth-user-id"), `Menghapus pamflet: ${data?.title || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as Pamflet);
+    logActivity(req.headers.get("x-auth-user-id"), `Menghapus display: ${data?.title || id}`, req.headers.get("x-auth-user-username"));
+    return ok(data as DisplaySlide);
   } catch (error) {
     const dbErr = handleDbError(error);
     if (dbErr) return dbErr;
@@ -151,10 +149,9 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const supabase: any = getSupabaseAdmin();
 
-    // Support bulk reordering for drag and drop
     if (body.items && Array.isArray(body.items)) {
       const { data: allItems, error: allItemsError } = await supabase
-        .from("pamflets")
+        .from("display")
         .select("*");
 
       if (allItemsError) {
@@ -176,14 +173,14 @@ export async function PATCH(req: Request) {
 
       for (let i = 0; i < newOrderedList.length; i++) {
         await supabase
-          .from("pamflets")
+          .from("display")
           .update({ order: i + 1 })
           .eq("id", newOrderedList[i].id);
       }
 
-      logActivity(req.headers.get("x-auth-user-id"), `Mengurutkan ulang pamflet`, req.headers.get("x-auth-user-username"));
+      logActivity(req.headers.get("x-auth-user-id"), `Mengurutkan ulang display`, req.headers.get("x-auth-user-username"));
       const { data: updated, error: updatedError } = await supabase
-        .from("pamflets")
+        .from("display")
         .select("*")
         .order("order", { ascending: true });
 
@@ -192,7 +189,7 @@ export async function PATCH(req: Request) {
         if (dbErr) return dbErr;
       }
 
-      return ok(updated as Pamflet[]);
+      return ok(updated as DisplaySlide[]);
     }
 
     const { id, direction } = body;
@@ -204,7 +201,7 @@ export async function PATCH(req: Request) {
     }
 
     const { data: allItems, error: allItemsError } = await supabase
-      .from("pamflets")
+      .from("display")
       .select("*")
       .order("order", { ascending: true });
 
@@ -229,14 +226,14 @@ export async function PATCH(req: Request) {
 
     for (let i = 0; i < items.length; i++) {
       await supabase
-        .from("pamflets")
+        .from("display")
         .update({ order: i + 1 })
         .eq("id", items[i].id);
     }
 
-    logActivity(req.headers.get("x-auth-user-id"), `Memindahkan pamflet: ${direction === "up" ? "naik" : "turun"}`, req.headers.get("x-auth-user-username"));
+    logActivity(req.headers.get("x-auth-user-id"), `Memindahkan display: ${direction === "up" ? "naik" : "turun"}`, req.headers.get("x-auth-user-username"));
     const { data: finalList, error: finalListError } = await supabase
-      .from("pamflets")
+      .from("display")
       .select("*")
       .order("order", { ascending: true });
 
@@ -245,7 +242,7 @@ export async function PATCH(req: Request) {
       if (dbErr) return dbErr;
     }
 
-    return ok(finalList as Pamflet[]);
+    return ok(finalList as DisplaySlide[]);
   } catch (error) {
     const dbErr = handleDbError(error);
     if (dbErr) return dbErr;
