@@ -1,4 +1,5 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import crypto from "node:crypto";
+import { query, execute } from "@/lib/mysql";
 import { logActivity } from "@/lib/activity-log";
 import { strukturOrganisasiSchema } from "@/lib/validation";
 import { ok, badRequest, serverError } from "@/lib/response";
@@ -9,14 +10,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("struktur_organisasi")
-      .select("*")
-      .order("urutan", { ascending: true });
-
-    if (error) throw error;
-    return ok(data as StrukturOrganisasi[]);
+    const rows = await query<any>(
+      "SELECT * FROM struktur_organisasi ORDER BY urutan ASC"
+    );
+    return ok(rows as StrukturOrganisasi[]);
   } catch (error) {
     return serverError(error);
   }
@@ -30,22 +27,27 @@ export async function POST(req: Request) {
       return badRequest(parsed.error.errors.map(e => e.message).join(", "));
     }
 
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("struktur_organisasi")
-      .insert({
-        jabatan: parsed.data.jabatan,
-        nama: parsed.data.nama || "",
-        inisial: parsed.data.inisial || null,
-        deskripsi: parsed.data.deskripsi || null,
-        urutan: typeof parsed.data.urutan === "number" ? parsed.data.urutan : 0,
-      })
-      .select()
-      .single();
+    const id = crypto.randomUUID();
+    await execute(
+      "INSERT INTO struktur_organisasi (id, jabatan, nama, inisial, deskripsi, urutan) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        parsed.data.jabatan,
+        parsed.data.nama || "",
+        parsed.data.inisial || null,
+        parsed.data.deskripsi || null,
+        typeof parsed.data.urutan === "number" ? parsed.data.urutan : 0,
+      ]
+    );
 
-    if (error) throw error;
+    const rows = await query<any>(
+      "SELECT * FROM struktur_organisasi WHERE id = ?",
+      [id]
+    );
+    const result = rows[0];
+
     logActivity(req.headers.get("x-auth-user-id"), `Menambah struktur organisasi: ${parsed.data.jabatan}`, req.headers.get("x-auth-user-username"));
-    return ok(data as StrukturOrganisasi);
+    return ok(result as StrukturOrganisasi);
   } catch (error) {
     return serverError(error);
   }

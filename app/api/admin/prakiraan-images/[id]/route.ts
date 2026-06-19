@@ -1,7 +1,6 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logActivity } from "@/lib/activity-log";
+import { query, execute } from "@/lib/mysql";
 import { ok, badRequest, notFound, serverError } from "@/lib/response";
-import type { PrakiraanImage } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -18,16 +17,26 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
     if (!id) return badRequest("Invalid id");
 
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("prakiraan_images")
-      .select(`*, category:category_id(*)`)
-      .eq("id", id)
-      .single();
+    const sql = `SELECT p.*, c.name AS cat_name, c.slug AS cat_slug, c.description AS cat_description, c.icon AS cat_icon FROM prakiraan_images p LEFT JOIN prakiraan_categories c ON p.category_id = c.id WHERE p.id = ?`;
+    const rows = await query(sql, [id]);
+    const data = rows[0];
 
-    if (error) throw error;
     if (!data) return notFound();
-    return ok(data as PrakiraanImage);
+
+    if (data.gallery_images && typeof data.gallery_images === "string") {
+      try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
+    }
+
+    data.category = data.cat_name ? {
+      id: data.category_id,
+      name: data.cat_name,
+      slug: data.cat_slug,
+      description: data.cat_description,
+      icon: data.cat_icon,
+    } : null;
+    delete data.cat_name; delete data.cat_slug; delete data.cat_description; delete data.cat_icon;
+
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }
@@ -38,18 +47,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params;
     if (!id) return badRequest("Invalid id");
 
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("prakiraan_images")
-      .delete()
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) throw error;
+    const [data] = await query("SELECT * FROM prakiraan_images WHERE id = ?", [id]);
     if (!data) return notFound();
-    logActivity(req.headers.get("x-auth-user-id"), `Menghapus prakiraan: ${data?.title || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as PrakiraanImage);
+
+    await execute("DELETE FROM prakiraan_images WHERE id = ?", [id]);
+
+    logActivity(
+      req.headers.get("x-auth-user-id"),
+      `Menghapus prakiraan: ${data?.title || id}`,
+      req.headers.get("x-auth-user-username")
+    );
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }
@@ -61,7 +69,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!id) return badRequest("Invalid id");
 
     const body = await req.json();
-    const supabase: any = getSupabaseAdmin();
 
     const cleanData: Record<string, unknown> = {};
     for (const key of ALLOWED_FIELDS) {
@@ -72,17 +79,40 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return badRequest("Tidak ada field yang valid untuk diupdate");
     }
 
-    const { data, error } = await supabase
-      .from("prakiraan_images")
-      .update(cleanData)
-      .eq("id", id)
-      .select()
-      .single();
+    if (cleanData.gallery_images && Array.isArray(cleanData.gallery_images)) {
+      cleanData.gallery_images = JSON.stringify(cleanData.gallery_images);
+    }
 
-    if (error) throw error;
+    const setClauses = Object.keys(cleanData).map((key) => `${key} = ?`).join(", ");
+    const values = Object.values(cleanData);
+
+    await execute(`UPDATE prakiraan_images SET ${setClauses} WHERE id = ?`, [...values, id]);
+
+    const sql = `SELECT p.*, c.name AS cat_name, c.slug AS cat_slug, c.description AS cat_description, c.icon AS cat_icon FROM prakiraan_images p LEFT JOIN prakiraan_categories c ON p.category_id = c.id WHERE p.id = ?`;
+    const rows = await query(sql, [id]);
+    const data = rows[0];
+
     if (!data) return notFound();
-    logActivity(req.headers.get("x-auth-user-id"), `Mengubah prakiraan: ${data?.title || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as PrakiraanImage);
+
+    if (data.gallery_images && typeof data.gallery_images === "string") {
+      try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
+    }
+
+    data.category = data.cat_name ? {
+      id: data.category_id,
+      name: data.cat_name,
+      slug: data.cat_slug,
+      description: data.cat_description,
+      icon: data.cat_icon,
+    } : null;
+    delete data.cat_name; delete data.cat_slug; delete data.cat_description; delete data.cat_icon;
+
+    logActivity(
+      req.headers.get("x-auth-user-id"),
+      `Mengubah prakiraan: ${data?.title || id}`,
+      req.headers.get("x-auth-user-username")
+    );
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }

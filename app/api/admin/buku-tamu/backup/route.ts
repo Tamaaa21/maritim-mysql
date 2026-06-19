@@ -1,34 +1,18 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { query } from "@/lib/mysql";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!url) {
-      return NextResponse.json({ success: false, message: "Supabase not configured" }, { status: 500 });
-    }
-
-    const key = serviceKey || anonKey;
-    const supabase = createClient(url, key as string);
-
-    const { data, error } = await supabase
-      .from("buku_tamu")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error) throw error;
+    const rows = await query("SELECT * FROM buku_tamu ORDER BY created_at ASC");
 
     const backupData = {
       version: "1.0",
       exported_at: new Date().toISOString(),
-      total: data?.length || 0,
-      records: data || [],
+      total: rows.length,
+      records: rows,
     };
 
     return new NextResponse(JSON.stringify(backupData, null, 2), {

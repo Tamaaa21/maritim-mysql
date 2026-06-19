@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { query, execute } from "@/lib/mysql";
 import { verifyPassword, hashPassword, createSessionToken, setAuthCookie } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { loginSchema } from "@/lib/validation";
@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
 
     const { username, password } = parsed.data;
 
-    // Rate limiting berdasarkan IP + username
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       || request.headers.get("x-real-ip")
       || "unknown";
@@ -40,18 +39,13 @@ export async function POST(request: NextRequest) {
       return tooManyRequests("Terlalu banyak percobaan login. Silakan coba lagi dalam 15 menit.");
     }
 
-    const supabase: any = getSupabaseAdmin();
+    const rows = await query<any>(
+      "SELECT id, username, password, role, nama, is_active FROM users WHERE username = ? LIMIT 1",
+      [username]
+    );
+    const user = rows[0];
 
-    const result = await supabase
-      .from("users")
-      .select("id, username, password, role, nama, is_active")
-      .eq("username", username)
-      .single();
-
-    const user = result.data;
-    const error = result.error;
-
-    if (error || !user) {
+    if (!user) {
       return unauthorized("Username atau password salah");
     }
 
@@ -66,7 +60,7 @@ export async function POST(request: NextRequest) {
       passwordValid = user.password === password;
       if (passwordValid) {
         const hashed = await hashPassword(password);
-        await supabase.from("users").update({ password: hashed }).eq("id", user.id);
+        await execute("UPDATE users SET password = ? WHERE id = ?", [hashed, user.id]);
       }
     }
 
@@ -76,17 +70,13 @@ export async function POST(request: NextRequest) {
 
     const token = await createSessionToken(user.id, user.role, user.username);
 
-    // Log aktivitas login
     const userAgent = request.headers.get("user-agent") || "unknown";
-    const { error: logError } = await supabase.from("login_logs").insert({
-      user_id: user.id,
-      username: user.username,
-      ip_address: ip || "unknown",
-      user_agent: userAgent || "unknown",
-      aktivitas: "Login ke panel admin",
-    });
-
-    if (logError) {
+    try {
+      await execute(
+        "INSERT INTO login_logs (id, user_id, username, ip_address, user_agent, aktivitas) VALUES (UUID(), ?, ?, ?, ?, ?)",
+        [user.id, user.username, ip || "unknown", userAgent || "unknown", "Login ke panel admin"]
+      );
+    } catch (logError) {
       console.error("Failed to record login log:", logError);
     }
 

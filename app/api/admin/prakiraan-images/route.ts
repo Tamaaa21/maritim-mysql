@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { uploadFile } from "@/lib/upload";
+import { uploadFile } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
+import { query, execute } from "@/lib/mysql";
 import { prakiraanSchema } from "@/lib/validation";
 import { ok, badRequest, serverError } from "@/lib/response";
-import type { PrakiraanImage } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,10 +11,8 @@ const VALID_DISPLAY_TYPES = ["gambar_saja", "gambar_teks", "gambar_galeri"];
 
 export async function POST(req: Request) {
   try {
-    const supabase: any = getSupabaseAdmin();
     const contentType = req.headers.get("content-type") || "";
 
-    // JSON body: create entry from an existing URL (useful for default images)
     if (contentType.includes("application/json")) {
       const body = await req.json();
       const parsed = prakiraanSchema.safeParse(body);
@@ -26,38 +22,45 @@ export async function POST(req: Request) {
 
       if (!parsed.data.url) return badRequest("No url provided");
 
-      const insertData: Record<string, unknown> = {
-        title: parsed.data.title,
-        url: parsed.data.url,
-      };
-      if (parsed.data.explanation) insertData.explanation = parsed.data.explanation;
-      if (parsed.data.slug) insertData.slug = parsed.data.slug;
-      if (parsed.data.waktu_mulai) insertData.waktu_mulai = parsed.data.waktu_mulai;
-      if (parsed.data.waktu_berakhir) insertData.waktu_berakhir = parsed.data.waktu_berakhir;
-      if (parsed.data.category_id) insertData.category_id = parsed.data.category_id;
+      const id = crypto.randomUUID();
+      const fields: string[] = ["id", "title", "url"];
+      const values: unknown[] = [id, parsed.data.title, parsed.data.url];
+      const placeholders: string[] = ["?", "?", "?"];
+
+      if (parsed.data.explanation) { fields.push("explanation"); values.push(parsed.data.explanation); placeholders.push("?"); }
+      if (parsed.data.slug) { fields.push("slug"); values.push(parsed.data.slug); placeholders.push("?"); }
+      if (parsed.data.waktu_mulai) { fields.push("waktu_mulai"); values.push(parsed.data.waktu_mulai); placeholders.push("?"); }
+      if (parsed.data.waktu_berakhir) { fields.push("waktu_berakhir"); values.push(parsed.data.waktu_berakhir); placeholders.push("?"); }
+      if (parsed.data.category_id) { fields.push("category_id"); values.push(parsed.data.category_id); placeholders.push("?"); }
       if (parsed.data.display_type && VALID_DISPLAY_TYPES.includes(parsed.data.display_type)) {
-        insertData.display_type = parsed.data.display_type;
+        fields.push("display_type"); values.push(parsed.data.display_type); placeholders.push("?");
       }
-      if (parsed.data.next_url) insertData.next_url = parsed.data.next_url;
-      if (parsed.data.next_explanation) insertData.next_explanation = parsed.data.next_explanation;
-      if (parsed.data.next_waktu_mulai) insertData.next_waktu_mulai = parsed.data.next_waktu_mulai;
-      if (parsed.data.next_waktu_berakhir) insertData.next_waktu_berakhir = parsed.data.next_waktu_berakhir;
-      if (parsed.data.gallery_images) insertData.gallery_images = parsed.data.gallery_images;
-      if (parsed.data.prioritas !== undefined) insertData.prioritas = parsed.data.prioritas;
-      if (body.uploader) insertData.uploader = body.uploader;
+      if (parsed.data.next_url) { fields.push("next_url"); values.push(parsed.data.next_url); placeholders.push("?"); }
+      if (parsed.data.next_explanation) { fields.push("next_explanation"); values.push(parsed.data.next_explanation); placeholders.push("?"); }
+      if (parsed.data.next_waktu_mulai) { fields.push("next_waktu_mulai"); values.push(parsed.data.next_waktu_mulai); placeholders.push("?"); }
+      if (parsed.data.next_waktu_berakhir) { fields.push("next_waktu_berakhir"); values.push(parsed.data.next_waktu_berakhir); placeholders.push("?"); }
+      if (parsed.data.gallery_images) { fields.push("gallery_images"); values.push(JSON.stringify(parsed.data.gallery_images)); placeholders.push("?"); }
+      if (parsed.data.prioritas !== undefined) { fields.push("prioritas"); values.push(parsed.data.prioritas); placeholders.push("?"); }
+      if (body.uploader) { fields.push("uploader"); values.push(body.uploader); placeholders.push("?"); }
 
-      const { data: insertResult, error: insertError } = await supabase
-        .from("prakiraan_images")
-        .insert(insertData)
-        .select()
-        .single();
+      await execute(
+        `INSERT INTO prakiraan_images (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`,
+        values
+      );
 
-      if (insertError) throw insertError;
-      logActivity(req.headers.get("x-auth-user-id"), `Menambah prakiraan: ${parsed.data.title}`, req.headers.get("x-auth-user-username"));
-      return ok(insertResult as PrakiraanImage);
+      const [data] = await query("SELECT * FROM prakiraan_images WHERE id = ?", [id]);
+      if (data?.gallery_images && typeof data.gallery_images === "string") {
+        try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
+      }
+
+      logActivity(
+        req.headers.get("x-auth-user-id"),
+        `Menambah prakiraan: ${parsed.data.title}`,
+        req.headers.get("x-auth-user-username")
+      );
+      return ok(data);
     }
 
-    // Multipart form-data upload
     const form = await req.formData();
     const file = form.get("file") as File | null;
     const nextFile = form.get("nextFile") as File | null;
@@ -85,32 +88,46 @@ export async function POST(req: Request) {
       nextPublicUrl = result.url;
     }
 
-    const insertData: Record<string, unknown> = { title, url: publicUrl, slug };
-    if (categoryId) insertData.category_id = categoryId;
-    if (explanation) insertData.explanation = explanation;
-    if (uploader) insertData.uploader = uploader;
-    if (waktuMulai) insertData.waktu_mulai = waktuMulai;
-    if (waktuBerakhir) insertData.waktu_berakhir = waktuBerakhir;
-    if (nextPublicUrl) insertData.next_url = nextPublicUrl;
-    if (nextExplanation) insertData.next_explanation = nextExplanation;
-    if (nextWaktuMulai) insertData.next_waktu_mulai = nextWaktuMulai;
-    if (nextWaktuBerakhir) insertData.next_waktu_berakhir = nextWaktuBerakhir;
-    if (displayType && VALID_DISPLAY_TYPES.includes(displayType)) insertData.display_type = displayType;
-    if (galleryImagesRaw) {
-      try { insertData.gallery_images = JSON.parse(galleryImagesRaw); } catch { /* ignore */ }
+    const id = crypto.randomUUID();
+    const fields: string[] = ["id", "title", "url", "slug"];
+    const values: unknown[] = [id, title, publicUrl, slug];
+    const placeholders: string[] = ["?", "?", "?", "?"];
+
+    if (categoryId) { fields.push("category_id"); values.push(categoryId); placeholders.push("?"); }
+    if (explanation) { fields.push("explanation"); values.push(explanation); placeholders.push("?"); }
+    if (uploader) { fields.push("uploader"); values.push(uploader); placeholders.push("?"); }
+    if (waktuMulai) { fields.push("waktu_mulai"); values.push(waktuMulai); placeholders.push("?"); }
+    if (waktuBerakhir) { fields.push("waktu_berakhir"); values.push(waktuBerakhir); placeholders.push("?"); }
+    if (nextPublicUrl) { fields.push("next_url"); values.push(nextPublicUrl); placeholders.push("?"); }
+    if (nextExplanation) { fields.push("next_explanation"); values.push(nextExplanation); placeholders.push("?"); }
+    if (nextWaktuMulai) { fields.push("next_waktu_mulai"); values.push(nextWaktuMulai); placeholders.push("?"); }
+    if (nextWaktuBerakhir) { fields.push("next_waktu_berakhir"); values.push(nextWaktuBerakhir); placeholders.push("?"); }
+    if (displayType && VALID_DISPLAY_TYPES.includes(displayType)) {
+      fields.push("display_type"); values.push(displayType); placeholders.push("?");
     }
-    if (prioritasRaw) insertData.prioritas = parseInt(prioritasRaw, 10);
+    if (galleryImagesRaw) {
+      fields.push("gallery_images");
+      try { values.push(JSON.stringify(JSON.parse(galleryImagesRaw))); } catch { values.push(galleryImagesRaw); }
+      placeholders.push("?");
+    }
+    if (prioritasRaw) { fields.push("prioritas"); values.push(parseInt(prioritasRaw, 10)); placeholders.push("?"); }
 
-    const { data: insertResult, error: insertError } = await supabase
-      .from("prakiraan_images")
-      .insert(insertData)
-      .select()
-      .single();
+    await execute(
+      `INSERT INTO prakiraan_images (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`,
+      values
+    );
 
-    if (insertError) throw insertError;
+    const [data] = await query("SELECT * FROM prakiraan_images WHERE id = ?", [id]);
+    if (data?.gallery_images && typeof data.gallery_images === "string") {
+      try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
+    }
 
-    logActivity(req.headers.get("x-auth-user-id"), `Menambah prakiraan: ${title}`, req.headers.get("x-auth-user-username"));
-    return ok(insertResult as PrakiraanImage);
+    logActivity(
+      req.headers.get("x-auth-user-id"),
+      `Menambah prakiraan: ${title}`,
+      req.headers.get("x-auth-user-username")
+    );
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }
@@ -118,24 +135,47 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const supabase: any = getSupabaseAdmin();
-
     const { searchParams } = new URL(req.url);
     const filterExpired = searchParams.get("filterExpired") === "true";
     const activeOnly = searchParams.get("activeOnly") === "true";
 
-    let query = supabase.from("prakiraan_images").select(`*, category:category_id(*)`);
+    let sql = `SELECT p.*, c.name AS cat_name, c.slug AS cat_slug, c.description AS cat_description, c.icon AS cat_icon FROM prakiraan_images p LEFT JOIN prakiraan_categories c ON p.category_id = c.id`;
+    const conditions: string[] = [];
+    const params: unknown[] = [];
 
     const nowStr = new Date().toISOString();
 
     if (filterExpired || activeOnly) {
-      query = query.or(`waktu_berakhir.is.null,waktu_berakhir.gt.${nowStr}`);
-      query = query.or(`waktu_mulai.is.null,waktu_mulai.lte.${nowStr}`);
+      conditions.push("(p.waktu_berakhir IS NULL OR p.waktu_berakhir > ?)");
+      params.push(nowStr);
+      conditions.push("(p.waktu_mulai IS NULL OR p.waktu_mulai <= ?)");
+      params.push(nowStr);
     }
 
-    const { data, error } = await query.order("created_at", { ascending: true });
-    if (error) throw error;
-    return ok(data as PrakiraanImage[]);
+    if (conditions.length > 0) {
+      sql += " WHERE " + conditions.join(" AND ");
+    }
+
+    sql += " ORDER BY p.created_at ASC";
+
+    const rows = await query(sql, params);
+
+    const data = (rows || []).map((row: any) => {
+      if (row.gallery_images && typeof row.gallery_images === "string") {
+        try { row.gallery_images = JSON.parse(row.gallery_images); } catch { /* ignore */ }
+      }
+      row.category = row.cat_name ? {
+        id: row.category_id,
+        name: row.cat_name,
+        slug: row.cat_slug,
+        description: row.cat_description,
+        icon: row.cat_icon,
+      } : null;
+      delete row.cat_name; delete row.cat_slug; delete row.cat_description; delete row.cat_icon;
+      return row;
+    });
+
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }

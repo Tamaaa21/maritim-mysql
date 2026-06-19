@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { query, execute } from "@/lib/mysql";
 import { logActivity } from "@/lib/activity-log";
 import { strukturOrganisasiSchema } from "@/lib/validation";
 import { ok, badRequest, notFound, serverError } from "@/lib/response";
@@ -15,28 +15,26 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return badRequest(parsed.error.errors.map(e => e.message).join(", "));
     }
 
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("struktur_organisasi")
-      .update({
-        jabatan: parsed.data.jabatan,
-        nama: parsed.data.nama || "",
-        inisial: parsed.data.inisial || null,
-        deskripsi: parsed.data.deskripsi || null,
-        urutan: typeof parsed.data.urutan === "number" ? parsed.data.urutan : 0,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single();
+    const result = await execute(
+      "UPDATE struktur_organisasi SET jabatan = ?, nama = ?, inisial = ?, deskripsi = ?, urutan = ?, updated_at = NOW() WHERE id = ?",
+      [
+        parsed.data.jabatan,
+        parsed.data.nama || "",
+        parsed.data.inisial || null,
+        parsed.data.deskripsi || null,
+        typeof parsed.data.urutan === "number" ? parsed.data.urutan : 0,
+        id,
+      ]
+    );
 
-    if (error) {
-      if (error.message?.includes("not found") || error.code === "PGRST116") {
-        return notFound();
-      }
-      throw error;
-    }
-    if (!data) return notFound();
+    if (result.affectedRows === 0) return notFound();
+
+    const rows = await query<any>(
+      "SELECT * FROM struktur_organisasi WHERE id = ?",
+      [id]
+    );
+    const data = rows[0];
+
     logActivity(req.headers.get("x-auth-user-id"), `Mengubah struktur organisasi: ${parsed.data.jabatan}`, req.headers.get("x-auth-user-username"));
     return ok(data as StrukturOrganisasi);
   } catch (error) {
@@ -47,24 +45,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const supabase: any = getSupabaseAdmin();
 
-    const { data, error } = await supabase
-      .from("struktur_organisasi")
-      .delete()
-      .eq("id", id)
-      .select()
-      .single();
+    const rows = await query<any>(
+      "SELECT * FROM struktur_organisasi WHERE id = ?",
+      [id]
+    );
+    const row = rows[0];
+    if (!row) return notFound();
 
-    if (error) {
-      if (error.message?.includes("not found") || error.code === "PGRST116") {
-        return notFound();
-      }
-      throw error;
-    }
-    if (!data) return notFound();
-    logActivity(req.headers.get("x-auth-user-id"), `Menghapus struktur organisasi: ${data?.jabatan || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as StrukturOrganisasi);
+    await execute("DELETE FROM struktur_organisasi WHERE id = ?", [id]);
+
+    logActivity(req.headers.get("x-auth-user-id"), `Menghapus struktur organisasi: ${row?.jabatan || id}`, req.headers.get("x-auth-user-username"));
+    return ok(row as StrukturOrganisasi);
   } catch (error) {
     return serverError(error);
   }

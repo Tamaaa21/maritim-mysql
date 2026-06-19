@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { query, execute } from "@/lib/mysql";
 import type { LoginLog } from "@/lib/types";
 import { logActivity } from "@/lib/activity-log";
 
@@ -11,27 +11,18 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get("username");
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json({ success: false, data: [] }, { status: 500 });
-    }
-
-    const supabase = createClient(supabaseUrl, serviceKey);
-    let query = supabase
-      .from("login_logs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
+    let sql = "SELECT * FROM login_logs";
+    const params: any[] = [];
 
     if (username) {
-      query = query.eq("username", username);
+      sql += " WHERE username = ?";
+      params.push(username);
     }
 
-    const { data, error } = await query;
+    sql += " ORDER BY created_at DESC LIMIT 100";
 
-    if (error) throw error;
-    return NextResponse.json({ success: true, data: (data || []) as LoginLog[] });
+    const rows = await query(sql, params);
+    return NextResponse.json({ success: true, data: (rows || []) as LoginLog[] });
   } catch (error: any) {
     console.error(error);
     return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });
@@ -40,16 +31,8 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json({ success: false, message: "Database config missing" }, { status: 500 });
-    }
-
-    const supabase = createClient(supabaseUrl, serviceKey);
     let ids: string[] = [];
-    
-    // Parse JSON body if present
+
     try {
       const body = await request.json();
       if (body.ids && Array.isArray(body.ids)) {
@@ -62,23 +45,11 @@ export async function DELETE(request: NextRequest) {
     const userId = request.headers.get("x-auth-user-id");
 
     if (ids.length > 0) {
-      // Delete specific records
-      const { error } = await supabase
-        .from("login_logs")
-        .delete()
-        .in("id", ids);
-        
-      if (error) throw error;
+      await execute("DELETE FROM login_logs WHERE id IN (?)", [ids]);
       logActivity(userId, `Menghapus ${ids.length} riwayat login`, request.headers.get("x-auth-user-username"));
       return NextResponse.json({ success: true, message: "Riwayat login yang dipilih berhasil dihapus" });
     } else {
-      // Delete all records
-      const { error } = await supabase
-        .from("login_logs")
-        .delete()
-        .neq("id", "0");
-
-      if (error) throw error;
+      await execute("DELETE FROM login_logs WHERE id IS NOT NULL");
       logActivity(userId, "Menghapus semua riwayat login", request.headers.get("x-auth-user-username"));
       return NextResponse.json({ success: true, message: "Semua riwayat login berhasil dihapus" });
     }

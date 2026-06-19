@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import crypto from "crypto";
+import { query, execute } from "@/lib/mysql";
 import { hashPassword, forbidden } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 
@@ -25,13 +26,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("users")
-      .select("id, username, role, nama, is_active, created_at")
-      .order("created_at", { ascending: true });
-
-    if (error) throw error;
+    const data = await query(
+      "SELECT id, username, role, nama, is_active, created_at FROM users ORDER BY created_at ASC"
+    );
     return NextResponse.json({ success: true, data: data || [] });
   } catch (error: any) {
     console.error(error);
@@ -57,37 +54,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Password minimal 6 karakter" }, { status: 400 });
     }
 
-    // Only super_admin can create other super_admin
     if (newRole === "super_admin" && role !== "super_admin") {
       return forbidden("Hanya Super Admin yang dapat membuat akun Super Admin");
     }
 
-    const supabase: any = getSupabaseAdmin();
+    const existing = await query<any>(
+      "SELECT id FROM users WHERE username = ? LIMIT 1",
+      [username]
+    );
 
-    const { data: existing } = await supabase
-      .from("users")
-      .select("id")
-      .eq("username", username)
-      .maybeSingle();
-
-    if (existing) {
+    if (existing.length > 0) {
       return NextResponse.json({ success: false, message: "Username sudah digunakan" }, { status: 409 });
     }
 
     const hashedPassword = await hashPassword(password);
+    const id = crypto.randomUUID();
 
-    const { data, error } = await supabase
-      .from("users")
-      .insert({
-        username,
-        password: hashedPassword,
-        role: newRole || "karyawan",
-        nama: nama || username,
-      })
-      .select("id, username, role, nama, is_active, created_at")
-      .single();
+    await execute(
+      "INSERT INTO users (id, username, password, role, nama) VALUES (?, ?, ?, ?, ?)",
+      [id, username, hashedPassword, newRole || "karyawan", nama || username]
+    );
 
-    if (error) throw error;
+    const rows = await query<any>(
+      "SELECT id, username, role, nama, is_active, created_at FROM users WHERE id = ? LIMIT 1",
+      [id]
+    );
+    const data = rows[0];
+
     logActivity(getUserId(request), `Menambah pengguna: ${username}`, getUsername(request));
     return NextResponse.json({ success: true, data });
   } catch (error: any) {

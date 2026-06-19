@@ -1,16 +1,13 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { uploadFile } from "@/lib/upload";
+import { uploadFile } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
+import { query, execute } from "@/lib/mysql";
 import { okCached, ok, badRequest, serverError } from "@/lib/response";
-import type { HeroImage } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const supabase: any = getSupabaseAdmin();
-
     const form = await req.formData();
     const file = form.get("file") as File | null;
     const name = form.get("name")?.toString() || file?.name || `hero-${Date.now()}`;
@@ -20,17 +17,21 @@ export async function POST(req: Request) {
 
     const { url } = await uploadFile(file, "hero");
 
-    const { data: insertData, error: insertError } = await supabase
-      .from("hero_images")
-      .insert({ name, url, order_index: orderIndex })
-      .select()
-      .single();
+    const id = crypto.randomUUID();
+    await execute(
+      "INSERT INTO hero_images (id, name, url, order_index) VALUES (?, ?, ?, ?)",
+      [id, name, url, orderIndex]
+    );
 
-    if (insertError) throw insertError;
+    const [data] = await query("SELECT * FROM hero_images WHERE id = ?", [id]);
 
-    logActivity(req.headers.get("x-auth-user-id"), `Menambah hero slider: ${name}`, req.headers.get("x-auth-user-username"));
+    logActivity(
+      req.headers.get("x-auth-user-id"),
+      `Menambah hero slider: ${name}`,
+      req.headers.get("x-auth-user-username")
+    );
 
-    return ok(insertData as HeroImage);
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }
@@ -38,14 +39,8 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("hero_images")
-      .select("*")
-      .order("order_index", { ascending: true });
-
-    if (error) throw error;
-    return okCached(data as HeroImage[]);
+    const data = await query("SELECT * FROM hero_images ORDER BY order_index ASC");
+    return okCached(data);
   } catch (error) {
     return serverError(error);
   }

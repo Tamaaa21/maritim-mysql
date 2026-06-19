@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { uploadMultipleFiles } from "@/lib/upload";
+import crypto from "node:crypto";
+import { query, execute } from "@/lib/mysql";
+import { uploadMultipleFiles } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
 import { ok, okCached, badRequest, serverError } from "@/lib/response";
 import type { KegiatanDocument } from "@/lib/types";
@@ -24,8 +24,6 @@ function getYouTubeId(url: string): string | null {
 
 export async function POST(req: Request) {
   try {
-    const supabase: any = getSupabaseAdmin();
-
     const form = await req.formData();
     const files = form.getAll("files") as File[];
     const singleFile = form.get("file") as File | null;
@@ -39,7 +37,8 @@ export async function POST(req: Request) {
       return badRequest("No file or YouTube link provided");
     }
 
-    const insertData: Record<string, unknown> = { title };
+    const id = crypto.randomUUID();
+    const insertData: Record<string, unknown> = { id, title };
 
     if (allFiles.length > 0) {
       const uploaded = await uploadMultipleFiles(allFiles, "kegiatan");
@@ -48,7 +47,7 @@ export async function POST(req: Request) {
       insertData.url = firstFile.url;
       insertData.file_path = firstFile.path;
       insertData.file_type = allFiles[0].type;
-      insertData.image_urls = imageUrls;
+      insertData.image_urls = JSON.stringify(imageUrls);
     } else if (youtube_url) {
       const ytId = getYouTubeId(youtube_url);
       if (ytId) insertData.url = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
@@ -58,21 +57,20 @@ export async function POST(req: Request) {
     if (event_date) insertData.event_date = event_date;
     if (youtube_url) insertData.youtube_url = youtube_url;
 
-    const { data: result, error: insertError } = await supabase
-      .from("kegiatan_documents")
-      .insert(insertData)
-      .select()
-      .single();
+    const columns = Object.keys(insertData).join(", ");
+    const placeholders = Object.keys(insertData).map(() => "?").join(", ");
+    await execute(
+      `INSERT INTO kegiatan_documents (${columns}) VALUES (${placeholders})`,
+      Object.values(insertData)
+    );
 
-    if (insertError) {
-      const msg = String(insertError.message || insertError);
-      if (msg.includes("Could not find the table")) {
-        return NextResponse.json({
-          success: false,
-          message: "Tabel kegiatan_documents belum dibuat di database. Jalankan migration SQL di Supabase dashboard.",
-        }, { status: 500 });
-      }
-      throw insertError;
+    const rows = await query<any>(
+      "SELECT * FROM kegiatan_documents WHERE id = ?",
+      [id]
+    );
+    const result = rows[0];
+    if (result?.image_urls && typeof result.image_urls === "string") {
+      try { result.image_urls = JSON.parse(result.image_urls); } catch {}
     }
 
     logActivity(req.headers.get("x-auth-user-id"), `Menambah dokumentasi kegiatan: ${title}`, req.headers.get("x-auth-user-username"));
@@ -84,20 +82,15 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("kegiatan_documents")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      const msg = String(error.message || error);
-      if (msg.includes("Could not find the table")) {
-        console.warn("kegiatan_documents table missing in Supabase schema");
-        return ok([] as KegiatanDocument[]);
+    const rows = await query<any>(
+      "SELECT * FROM kegiatan_documents ORDER BY created_at DESC"
+    );
+    const data = rows.map((r: any) => {
+      if (r.image_urls && typeof r.image_urls === "string") {
+        try { r.image_urls = JSON.parse(r.image_urls); } catch {}
       }
-      throw error;
-    }
+      return r;
+    });
     return okCached(data as KegiatanDocument[]);
   } catch (error) {
     return serverError(error);

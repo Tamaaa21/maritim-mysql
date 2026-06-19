@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { query, execute } from "@/lib/mysql";
 
 export async function logActivity(
   userId: string | null | undefined,
@@ -7,24 +7,19 @@ export async function logActivity(
 ) {
   if (!userId) return;
 
-  const supabase: any = getSupabaseAdmin();
   let finalUsername = username || "";
 
   if (!finalUsername) {
-    const { data: user } = await supabase
-      .from("users")
-      .select("username")
-      .eq("id", userId)
-      .maybeSingle();
-
-    finalUsername = user?.username || "unknown";
+    const rows = await query<any>("SELECT username FROM users WHERE id = ? LIMIT 1", [userId]);
+    finalUsername = rows[0]?.username || "unknown";
   }
 
-  const { error } = await supabase
-    .from("login_logs")
-    .insert({ user_id: userId, username: finalUsername, aktivitas });
-
-  if (error) {
+  try {
+    await execute(
+      "INSERT INTO login_logs (id, user_id, username, aktivitas) VALUES (UUID(), ?, ?, ?)",
+      [userId, finalUsername, aktivitas]
+    );
+  } catch (error) {
     console.error("[logActivity] Gagal mencatat aktivitas:", error);
   }
 }

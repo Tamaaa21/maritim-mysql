@@ -1,17 +1,11 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { query } from "@/lib/mysql";
 import { okCached, serverError } from "@/lib/response";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("struktur_organisasi")
-      .select("*")
-      .order("urutan", { ascending: true });
-
-    if (error) throw error;
+    const data = await query("SELECT * FROM struktur_organisasi ORDER BY urutan ASC");
     return okCached(data || []);
   } catch (error) {
     return serverError(error);

@@ -1,25 +1,13 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { query } from "@/lib/mysql";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json({ count: 0 }, { status: 500 });
-    }
-
-    const supabase = createClient(supabaseUrl, serviceKey);
-    const { count, error } = await supabase
-      .from("users")
-      .select("*", { count: "exact", head: true })
-      .eq("is_active", true);
-
-    if (error) throw error;
-    return NextResponse.json({ count: count || 0 });
+    const rows = await query("SELECT COUNT(*) as count FROM users WHERE is_active = true");
+    return NextResponse.json({ count: rows[0].count || 0 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ count: 0 });

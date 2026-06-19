@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { uploadFile } from "@/lib/upload";
+import { uploadFile } from "@/lib/storage";
 import { badRequest, serverError } from "@/lib/response";
 
 export const runtime = "nodejs";

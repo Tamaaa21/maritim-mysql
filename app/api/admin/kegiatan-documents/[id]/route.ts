@@ -1,5 +1,6 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { uploadMultipleFiles } from "@/lib/upload";
+import crypto from "node:crypto";
+import { query, execute } from "@/lib/mysql";
+import { uploadMultipleFiles, deleteFile } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
 import { ok, serverError } from "@/lib/response";
 import type { KegiatanDocument } from "@/lib/types";
@@ -9,33 +10,21 @@ export const runtime = "nodejs";
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const supabase: any = getSupabaseAdmin();
 
-    const { data: row } = await supabase
-      .from("kegiatan_documents")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const rows = await query<any>(
+      "SELECT * FROM kegiatan_documents WHERE id = ?",
+      [id]
+    );
+    const row = rows[0];
 
-    try {
-      if (row?.file_path) {
-        const bucket = process.env.SUPABASE_STORAGE_BUCKET || "public";
-        await supabase.storage.from(bucket).remove([row.file_path]);
-      }
-    } catch (e) {
-      console.warn("Failed to remove storage object", e);
+    if (row?.file_path) {
+      await deleteFile(row.file_path);
     }
 
-    const { data, error } = await supabase
-      .from("kegiatan_documents")
-      .delete()
-      .eq("id", id)
-      .select()
-      .single();
+    await execute("DELETE FROM kegiatan_documents WHERE id = ?", [id]);
 
-    if (error) throw error;
-    logActivity(req.headers.get("x-auth-user-id"), `Menghapus dokumentasi kegiatan: ${data?.title || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as KegiatanDocument);
+    logActivity(req.headers.get("x-auth-user-id"), `Menghapus dokumentasi kegiatan: ${row?.title || id}`, req.headers.get("x-auth-user-username"));
+    return ok(row as KegiatanDocument);
   } catch (error) {
     return serverError(error);
   }
@@ -44,7 +33,6 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const supabase: any = getSupabaseAdmin();
 
     let body: Record<string, unknown> = {};
     const contentType = req.headers.get("content-type") || "";
@@ -69,22 +57,37 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         body.url = firstFile.url;
         body.file_path = firstFile.path;
         body.file_type = files[0].type;
-        body.image_urls = imageUrls;
+        body.image_urls = JSON.stringify(imageUrls);
       }
     } else {
       body = await req.json();
     }
 
-    const { data, error } = await supabase
-      .from("kegiatan_documents")
-      .update(body)
-      .eq("id", id)
-      .select()
-      .single();
+    const setClauses: string[] = [];
+    const values: unknown[] = [];
+    for (const [key, value] of Object.entries(body)) {
+      setClauses.push(`${key} = ?`);
+      values.push(value);
+    }
+    setClauses.push("updated_at = NOW()");
+    values.push(id);
 
-    if (error) throw error;
-    logActivity(req.headers.get("x-auth-user-id"), `Mengubah dokumentasi kegiatan: ${data?.title || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as KegiatanDocument);
+    await execute(
+      `UPDATE kegiatan_documents SET ${setClauses.join(", ")} WHERE id = ?`,
+      values
+    );
+
+    const rows = await query<any>(
+      "SELECT * FROM kegiatan_documents WHERE id = ?",
+      [id]
+    );
+    const result = rows[0];
+    if (result?.image_urls && typeof result.image_urls === "string") {
+      try { result.image_urls = JSON.parse(result.image_urls); } catch {}
+    }
+
+    logActivity(req.headers.get("x-auth-user-id"), `Mengubah dokumentasi kegiatan: ${result?.title || id}`, req.headers.get("x-auth-user-username"));
+    return ok(result as KegiatanDocument);
   } catch (error) {
     return serverError(error);
   }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { query, execute } from "@/lib/mysql";
 import { hashPassword, forbidden } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 
@@ -37,7 +37,6 @@ export async function PATCH(request: NextRequest, context: any) {
     if (!id) return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
 
     const body = await request.json();
-    const supabase: any = getSupabaseAdmin();
 
     const updateData: any = {};
     if (body.nama !== undefined) updateData.nama = body.nama;
@@ -55,14 +54,27 @@ export async function PATCH(request: NextRequest, context: any) {
       updateData.password = await hashPassword(body.password);
     }
 
-    const { data, error } = await supabase
-      .from("users")
-      .update(updateData)
-      .eq("id", id)
-      .select("id, username, role, nama, is_active, created_at")
-      .single();
+    const setClauses = Object.keys(updateData).map(key => `${key} = ?`);
+    if (setClauses.length === 0) {
+      return NextResponse.json({ success: false, message: "Tidak ada data yang diubah" }, { status: 400 });
+    }
 
-    if (error) throw error;
+    const values = Object.values(updateData);
+    await execute(
+      `UPDATE users SET ${setClauses.join(", ")} WHERE id = ?`,
+      [...values, id]
+    );
+
+    const rows = await query<any>(
+      "SELECT id, username, role, nama, is_active, created_at FROM users WHERE id = ? LIMIT 1",
+      [id]
+    );
+    const data = rows[0];
+
+    if (!data) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
     logActivity(getUserId(request), `Mengubah pengguna: ${data?.username || id}`, getUsername(request));
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
@@ -81,18 +93,20 @@ export async function DELETE(request: NextRequest, context: any) {
     const id = getId(request, context);
     if (!id) return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
 
-    const supabase: any = getSupabaseAdmin();
+    const rows = await query<any>(
+      "SELECT id, username FROM users WHERE id = ? LIMIT 1",
+      [id]
+    );
+    const user = rows[0];
 
-    const { data, error } = await supabase
-      .from("users")
-      .delete()
-      .eq("id", id)
-      .select()
-      .single();
+    const result = await execute("DELETE FROM users WHERE id = ?", [id]);
 
-    if (error) throw error;
-    logActivity(getUserId(request), `Menghapus pengguna: ${data?.username || id}`, getUsername(request));
-    return NextResponse.json({ success: true, data });
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
+    logActivity(getUserId(request), `Menghapus pengguna: ${user?.username || id}`, getUsername(request));
+    return NextResponse.json({ success: true, data: user || { id } });
   } catch (error: any) {
     console.error(error);
     return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });

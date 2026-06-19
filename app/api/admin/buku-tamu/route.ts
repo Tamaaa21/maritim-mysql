@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { NextRequest } from "next/server";
+import crypto from "crypto";
+import { query, execute } from "@/lib/mysql";
 import { logActivity } from "@/lib/activity-log";
+import { ok, badRequest, serverError } from "@/lib/response";
 import type { BukuTamu } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -20,28 +22,21 @@ function getRole(request: NextRequest) {
 
 export async function GET() {
   try {
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("buku_tamu")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return NextResponse.json((data || []) as BukuTamu[]);
+    const rows = await query("SELECT * FROM buku_tamu ORDER BY created_at DESC");
+    return ok(rows as BukuTamu[]);
   } catch (error) {
     console.error(error);
-    return NextResponse.json([], { status: 500 });
+    return serverError(error);
   }
 }
 
 export async function DELETE(request: NextRequest) {
   const role = getRole(request);
   if (role !== "super_admin" && role !== "admin") {
-    return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+    return badRequest("Forbidden");
   }
 
   try {
-    const supabase = getSupabaseAdmin();
     let ids: string[] = [];
 
     try {
@@ -54,18 +49,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (ids.length > 0) {
-      const { error } = await supabase.from("buku_tamu").delete().in("id", ids);
-      if (error) throw error;
+      await execute("DELETE FROM buku_tamu WHERE id IN (?)", [ids]);
       logActivity(getUserId(request), `Menghapus ${ids.length} data buku tamu`, getUsername(request));
-      return NextResponse.json({ success: true, message: "Data terpilih berhasil dihapus" });
+      return ok(null, "Data terpilih berhasil dihapus");
     } else {
-      const { error } = await supabase.from("buku_tamu").delete().neq("id", "0");
-      if (error) throw error;
+      await execute("DELETE FROM buku_tamu WHERE id IS NOT NULL");
       logActivity(getUserId(request), "Menghapus semua data buku tamu", getUsername(request));
-      return NextResponse.json({ success: true, message: "Semua data berhasil dihapus" });
+      return ok(null, "Semua data berhasil dihapus");
     }
   } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });
+    return serverError(error);
   }
 }

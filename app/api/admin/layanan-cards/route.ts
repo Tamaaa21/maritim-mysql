@@ -1,4 +1,5 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import crypto from "node:crypto";
+import { query, execute } from "@/lib/mysql";
 import { logActivity } from "@/lib/activity-log";
 import { layananCardSchema } from "@/lib/validation";
 import { okCached, ok, badRequest, serverError } from "@/lib/response";
@@ -9,14 +10,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("layanan_cards")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error) throw error;
-    return okCached(data as LayananCard[]);
+    const rows = await query<any>(
+      "SELECT * FROM layanan_cards ORDER BY created_at ASC"
+    );
+    return okCached(rows as LayananCard[]);
   } catch (error) {
     return serverError(error);
   }
@@ -30,21 +27,26 @@ export async function POST(req: Request) {
       return badRequest(parsed.error.errors.map(e => e.message).join(", "));
     }
 
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("layanan_cards")
-      .insert({
-        nama_layanan: parsed.data.nama_layanan,
-        deskripsi: parsed.data.deskripsi || null,
-        url_google_form: parsed.data.url_google_form || null,
-        cover_url: parsed.data.cover_url || null,
-      })
-      .select()
-      .single();
+    const id = crypto.randomUUID();
+    await execute(
+      "INSERT INTO layanan_cards (id, nama_layanan, deskripsi, url_google_form, cover_url) VALUES (?, ?, ?, ?, ?)",
+      [
+        id,
+        parsed.data.nama_layanan,
+        parsed.data.deskripsi || null,
+        parsed.data.url_google_form || null,
+        parsed.data.cover_url || null,
+      ]
+    );
 
-    if (error) throw error;
+    const rows = await query<any>(
+      "SELECT * FROM layanan_cards WHERE id = ?",
+      [id]
+    );
+    const result = rows[0];
+
     logActivity(req.headers.get("x-auth-user-id"), `Menambah layanan: ${parsed.data.nama_layanan}`, req.headers.get("x-auth-user-username"));
-    return ok(data as LayananCard);
+    return ok(result as LayananCard);
   } catch (error) {
     return serverError(error);
   }

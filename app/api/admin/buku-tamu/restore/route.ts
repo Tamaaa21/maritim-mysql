@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
+import { execute } from "@/lib/mysql";
 import type { BukuTamu } from "@/lib/types";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !serviceKey) {
-      return NextResponse.json({ success: false, message: "Supabase not configured" }, { status: 500 });
-    }
-
-    const supabase = createClient(url, serviceKey);
     const body = await req.json();
 
     let records: Partial<BukuTamu>[] = [];
@@ -28,30 +22,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Tidak ada data untuk direstore" }, { status: 400 });
     }
 
-    // Strip id to let DB generate new UUIDs, keep other fields
-    const insertData = records.map((r: Partial<BukuTamu>) => ({
-      nama: r.nama,
-      email: r.email,
-      no_telepon: r.no_telepon,
-      instansi: r.instansi || null,
-      keperluan: r.keperluan,
-      foto_url: r.foto_url || null,
-      foto_data: r.foto_data || null,
-      created_at: r.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
-
-    const { data, error } = await supabase
-      .from("buku_tamu")
-      .insert(insertData)
-      .select();
-
-    if (error) throw error;
+    let inserted = 0;
+    for (const r of records) {
+      const id = crypto.randomUUID();
+      await execute(
+        "INSERT INTO buku_tamu (id, nama, email, no_telepon, instansi, keperluan, foto_url, foto_data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id,
+          r.nama,
+          r.email,
+          r.no_telepon,
+          r.instansi || null,
+          r.keperluan,
+          r.foto_url || null,
+          r.foto_data || null,
+          r.created_at || new Date().toISOString(),
+          new Date().toISOString(),
+        ]
+      );
+      inserted++;
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Berhasil merestore ${data?.length || 0} data buku tamu`,
-      count: data?.length || 0,
+      message: `Berhasil merestore ${inserted} data buku tamu`,
+      count: inserted,
     });
   } catch (error: any) {
     console.error(error);

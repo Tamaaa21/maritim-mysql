@@ -1,21 +1,20 @@
 require('dotenv').config({ path: '.env.local' });
-const { createClient } = require('@supabase/supabase-js');
-const WebSocket = require('ws');
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if(!supabaseUrl || !serviceKey) { console.error("No env vars", process.env.NEXT_PUBLIC_SUPABASE_URL); process.exit(1); }
-const supabase = createClient(supabaseUrl, serviceKey, {
-  realtime: { transport: WebSocket }
-});
+const mysql = require('mysql2/promise');
+
 async function test() {
-  const { data, error } = await supabase.from('login_logs').insert({
-    user_id: '752d034d-d80a-48ea-bd78-9568b68b7f72',
-    username: 'test',
-    ip_address: '127.0.0.1',
-    user_agent: 'test',
-    created_at: new Date().toISOString()
+  const connection = await mysql.createConnection({
+    host: process.env.MYSQL_HOST || 'localhost',
+    port: parseInt(process.env.MYSQL_PORT || '3306'),
+    user: process.env.MYSQL_USER || 'root',
+    password: process.env.MYSQL_PASSWORD || '',
+    database: process.env.MYSQL_DATABASE || 'bmkg_maritim',
   });
-  console.log('Error:', error);
-  console.log('Data:', data);
+
+  const [result] = await connection.execute(
+    "INSERT INTO login_logs (id, user_id, username, ip_address, user_agent) VALUES (UUID(), ?, ?, ?, ?)",
+    ['752d034d-d80a-48ea-bd78-9568b68b7f72', 'test', '127.0.0.1', 'test']
+  );
+  console.log('Result:', result);
+  await connection.end();
 }
-test();
+test().catch(console.error);

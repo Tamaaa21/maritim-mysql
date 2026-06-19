@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { query } from "@/lib/mysql";
 import type { User } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -16,14 +16,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const supabase: any = getSupabaseAdmin();
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("id, username, role, nama, is_active")
-      .eq("id", userId)
-      .single();
+    const rows = await query<any>(
+      "SELECT id, username, role, nama, is_active FROM users WHERE id = ? LIMIT 1",
+      [userId]
+    );
+    const user = rows[0];
 
-    if (error || !user) {
+    if (!user) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 401 });
     }
 

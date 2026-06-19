@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { query, execute } from "@/lib/mysql";
 import { verifyPassword, hashPassword } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 import { changePasswordSchema } from "@/lib/validation";
@@ -22,30 +22,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Sesi tidak valid, silakan login ulang" }, { status: 401 });
     }
 
-    const supabase: any = getSupabaseAdmin();
+    const rows = await query<any>(
+      "SELECT id, password FROM users WHERE id = ? LIMIT 1",
+      [userId]
+    );
+    const user = rows[0];
 
-    const { data: user, error: findError } = await supabase
-      .from("users")
-      .select("id, password")
-      .eq("id", userId)
-      .single();
-
-    if (findError || !user) return notFound("Akun tidak ditemukan");
+    if (!user) return notFound("Akun tidak ditemukan");
 
     const passwordValid = await verifyPassword(currentPassword, user.password);
     if (!passwordValid) return badRequest("Kata sandi lama salah");
 
     const hashedPassword = await hashPassword(newPassword);
 
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ password: hashedPassword })
-      .eq("id", user.id);
-
-    if (updateError) {
-      console.error("Update password error:", updateError);
-      return NextResponse.json({ success: false, message: "Gagal memperbarui kata sandi di database" }, { status: 500 });
-    }
+    await execute(
+      "UPDATE users SET password = ? WHERE id = ?",
+      [hashedPassword, user.id]
+    );
 
     logActivity(userId, "Mengubah kata sandi", request.headers.get("x-auth-user-username"));
 

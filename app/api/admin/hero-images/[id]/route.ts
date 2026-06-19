@@ -1,7 +1,6 @@
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logActivity } from "@/lib/activity-log";
+import { query, execute } from "@/lib/mysql";
 import { ok, badRequest, serverError } from "@/lib/response";
-import type { HeroImage } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -12,17 +11,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params;
     if (!id) return badRequest("Invalid id");
 
-    const supabase: any = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("hero_images")
-      .delete()
-      .eq("id", id)
-      .select()
-      .single();
+    const [data] = await query("SELECT * FROM hero_images WHERE id = ?", [id]);
+    if (!data) return badRequest("Data tidak ditemukan");
 
-    if (error) throw error;
-    logActivity(req.headers.get("x-auth-user-id"), `Menghapus hero slider: ${data?.name || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as HeroImage);
+    await execute("DELETE FROM hero_images WHERE id = ?", [id]);
+
+    logActivity(
+      req.headers.get("x-auth-user-id"),
+      `Menghapus hero slider: ${data?.name || id}`,
+      req.headers.get("x-auth-user-username")
+    );
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }
@@ -34,7 +33,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!id) return badRequest("Invalid id");
 
     const body = await req.json();
-    const supabase: any = getSupabaseAdmin();
 
     const cleanData: Record<string, unknown> = {};
     for (const key of ALLOWED_FIELDS) {
@@ -45,16 +43,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return badRequest("Tidak ada field yang valid untuk diupdate");
     }
 
-    const { data, error } = await supabase
-      .from("hero_images")
-      .update(cleanData)
-      .eq("id", id)
-      .select()
-      .single();
+    const setClauses = Object.keys(cleanData).map((key) => `${key} = ?`).join(", ");
+    const values = Object.values(cleanData);
 
-    if (error) throw error;
-    logActivity(req.headers.get("x-auth-user-id"), `Mengubah hero slider: ${data?.name || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as HeroImage);
+    await execute(`UPDATE hero_images SET ${setClauses} WHERE id = ?`, [...values, id]);
+
+    const [data] = await query("SELECT * FROM hero_images WHERE id = ?", [id]);
+
+    logActivity(
+      req.headers.get("x-auth-user-id"),
+      `Mengubah hero slider: ${data?.name || id}`,
+      req.headers.get("x-auth-user-username")
+    );
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }
