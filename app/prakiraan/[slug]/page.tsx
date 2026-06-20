@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ArrowLeft, Calendar, AlertCircle, Clock, Loader, ChevronLeft, ChevronRight, X, Waves, TrendingUp } from "lucide-react";
 import { getIcon } from "@/lib/prakiraan-icons";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface PrakiraanDetail {
   id: string;
@@ -42,6 +43,8 @@ export default function PrakiraanDetailPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
+
+  usePageTitle(data?.title || "Prakiraan Cuaca");
 
   const handleImageClick = (url?: string) => {
     if (!url) return;

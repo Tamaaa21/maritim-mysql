@@ -83,7 +83,7 @@ export default function ContactSection() {
           {/* Right: Google Maps */}
           <div className="rounded-2xl overflow-hidden shadow-xl border border-gray-100 h-64 md:h-[400px]">
             <iframe
-              src="https://maps.google.com/maps?q=BMKG%20Kota%20Tegal&t=&z=15&ie=UTF8&iwloc=&output=embed"
+              src="https://www.google.com/maps?q=BMKG+Maritim+Tegal&output=embed"
               className="w-full h-full"
               style={{ border: 0 }}
               allowFullScreen

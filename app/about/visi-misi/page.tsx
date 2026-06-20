@@ -1,9 +1,13 @@
-"use client";
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { ArrowLeft, Target, Compass, Award } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Visi & Misi",
+  description: "Visi, Misi, dan Tujuan BMKG Periode 2020-2024",
+};
 
 export default function VisiMisiPage() {
   return (

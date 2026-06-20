@@ -184,6 +184,7 @@ export default function LayananSection({ limit }: { limit?: number }) {
                           src={svc.cover_url} 
                           alt={svc.nama_layanan} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
                       </>

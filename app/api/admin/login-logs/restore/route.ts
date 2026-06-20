@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { execute } from "@/lib/mysql";
-import type { LoginLog } from "@/lib/types";
+import { db, schema } from "@/db";
+
 
 export const runtime = "nodejs";
 
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    let records: Partial<LoginLog>[] = [];
+    let records: any[] = [];
     if (body.records && Array.isArray(body.records)) {
       records = body.records;
     } else if (Array.isArray(body)) {
@@ -25,17 +25,14 @@ export async function POST(req: Request) {
     let inserted = 0;
     for (const r of records) {
       const id = crypto.randomUUID();
-      await execute(
-        "INSERT INTO login_logs (id, user_id, username, ip_address, user_agent, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        [
-          id,
-          r.user_id,
-          r.username,
-          r.ip_address || null,
-          r.user_agent || null,
-          r.created_at || new Date().toISOString(),
-        ]
-      );
+      await db.insert(schema.login_logs).values({
+        id,
+        user_id: r.user_id,
+        username: r.username,
+        ip_address: r.ip_address || null,
+        user_agent: r.user_agent || null,
+        created_at: r.created_at || new Date().toISOString(),
+      });
       inserted++;
     }
 
@@ -44,8 +41,8 @@ export async function POST(req: Request) {
       message: `Berhasil merestore ${inserted} data login logs`,
       count: inserted,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Gagal restore log login" }, { status: 500 });
   }
 }

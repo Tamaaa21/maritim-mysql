@@ -1,6 +1,8 @@
+import crypto from "crypto";
 import { uploadFile } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq, asc } from "drizzle-orm";
 import { okCached, ok, badRequest, serverError } from "@/lib/response";
 
 export const runtime = "nodejs";
@@ -18,12 +20,14 @@ export async function POST(req: Request) {
     const { url } = await uploadFile(file, "hero");
 
     const id = crypto.randomUUID();
-    await execute(
-      "INSERT INTO hero_images (id, name, url, order_index) VALUES (?, ?, ?, ?)",
-      [id, name, url, orderIndex]
-    );
+    await db.insert(schema.hero_images).values({
+      id,
+      name,
+      url,
+      order_index: orderIndex,
+    });
 
-    const [data] = await query("SELECT * FROM hero_images WHERE id = ?", [id]);
+    const [data] = await db.select().from(schema.hero_images).where(eq(schema.hero_images.id, id));
 
     logActivity(
       req.headers.get("x-auth-user-id"),
@@ -39,7 +43,7 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const data = await query("SELECT * FROM hero_images ORDER BY order_index ASC");
+    const data = await db.select().from(schema.hero_images).orderBy(asc(schema.hero_images.order_index));
     return okCached(data);
   } catch (error) {
     return serverError(error);

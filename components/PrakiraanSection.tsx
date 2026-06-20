@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronRight, ChevronLeft, X, AlertCircle, Calendar, ArrowRight, ArrowLeft } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { ChevronRight, AlertCircle, Calendar, ArrowRight, ArrowLeft } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getIcon } from "@/lib/prakiraan-icons";
 
@@ -31,7 +31,7 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const checkScroll = () => {
+  const checkScroll = useCallback(() => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       setCanScrollLeft(scrollLeft > 2 || activeCategory !== null);
@@ -40,7 +40,7 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
         (activeCategory !== null && categories.findIndex(c => c.id === activeCategory) < categories.length - 1)
       );
     }
-  };
+  }, [activeCategory, categories]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -56,7 +56,7 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
         clearTimeout(timer);
       };
     }
-  }, [categories, activeCategory]);
+  }, [categories, activeCategory, checkScroll]);
 
   // Scroll active category into view automatically when selection changes
   useEffect(() => {
@@ -76,7 +76,7 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
     }
     const timer = setTimeout(checkScroll, 350);
     return () => clearTimeout(timer);
-  }, [activeCategory]);
+  }, [activeCategory, checkScroll]);
 
   const handleArrowClick = (dir: "left" | "right") => {
     const currentIndex = activeCategory === null ? -1 : categories.findIndex(c => c.id === activeCategory);
@@ -370,8 +370,9 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
                 >
                   <div className="relative h-44 w-full overflow-hidden flex-shrink-0">
                     <img
-                      src={card.url}
+                      src={card.image_url}
                       alt={card.title}
+                      loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-60" />

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 
 export const runtime = "nodejs";
 
-const BMKG_API = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=33.76.01.1001';
+const BMKG_API = process.env.BMKG_API_URL || 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=33.76.01.1001';
 
 let CACHE: { data: any | null; expires: number } = { data: null, expires: 0 };
 

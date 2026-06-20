@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { writeFileSync } from "fs";
+import { join } from "path";
 
 export function ok<T>(data: T, message?: string, cacheMaxAge?: number) {
   const headers: Record<string, string> = {};
@@ -29,10 +31,11 @@ export function conflict(message: string) {
 }
 
 export function serverError(error?: unknown) {
-  const message = error instanceof Error ? error.message : "Terjadi kesalahan server";
   console.error("[Server Error]", error);
-  require('fs').writeFileSync('/tmp/latest_error.log', JSON.stringify({ message, error: error instanceof Error ? error.stack : error }, null, 2));
-  return NextResponse.json({ success: false, message }, { status: 500 });
+  try {
+    writeFileSync(join("/tmp", "latest_error.log"), JSON.stringify({ error: error instanceof Error ? error.stack : error }, null, 2));
+  } catch { /* ignore file write errors */ }
+  return NextResponse.json({ success: false, message: "Terjadi kesalahan server" }, { status: 500 });
 }
 
 export function paginated<T>(data: T[], total: number, page: number, perPage: number) {

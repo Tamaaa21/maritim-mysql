@@ -24,7 +24,7 @@ export default function WhatsAppFloating() {
 
   if (hidden) return null;
 
-  const phone = "628112562200"; // Indonesian full international format without +
+  const phone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "628112562200";
   const text = encodeURIComponent("Halo Stasiun Meteorologi Maritim Tegal, saya ingin bertanya tentang layanan.");
   const href = `https://wa.me/${phone}?text=${text}`;
 

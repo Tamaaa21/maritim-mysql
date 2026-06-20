@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { sql, eq } from "drizzle-orm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rows = await query("SELECT COUNT(*) as count FROM users WHERE is_active = true");
-    return NextResponse.json({ count: rows[0].count || 0 });
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(schema.users).where(eq(schema.users.is_active, true));
+    return NextResponse.json({ count: result.count || 0 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ count: 0 });

@@ -1,4 +1,5 @@
-import { query, execute } from "@/lib/mysql";
+import crypto from "crypto";
+import { db, schema } from "@/db";
 
 export async function logActivity(
   userId: string | null | undefined,
@@ -7,18 +8,13 @@ export async function logActivity(
 ) {
   if (!userId) return;
 
-  let finalUsername = username || "";
-
-  if (!finalUsername) {
-    const rows = await query<any>("SELECT username FROM users WHERE id = ? LIMIT 1", [userId]);
-    finalUsername = rows[0]?.username || "unknown";
-  }
-
   try {
-    await execute(
-      "INSERT INTO login_logs (id, user_id, username, aktivitas) VALUES (UUID(), ?, ?, ?)",
-      [userId, finalUsername, aktivitas]
-    );
+    await db.insert(schema.login_logs).values({
+      id: crypto.randomUUID(),
+      user_id: userId,
+      username: username || "unknown",
+      aktivitas,
+    });
   } catch (error) {
     console.error("[logActivity] Gagal mencatat aktivitas:", error);
   }

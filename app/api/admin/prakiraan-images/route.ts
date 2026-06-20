@@ -1,6 +1,8 @@
+import crypto from "crypto";
 import { uploadFile } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq, asc, and, gt, lte, or, isNull, sql } from "drizzle-orm";
 import { prakiraanSchema } from "@/lib/validation";
 import { ok, badRequest, serverError } from "@/lib/response";
 
@@ -23,32 +25,27 @@ export async function POST(req: Request) {
       if (!parsed.data.url) return badRequest("No url provided");
 
       const id = crypto.randomUUID();
-      const fields: string[] = ["id", "title", "url"];
-      const values: unknown[] = [id, parsed.data.title, parsed.data.url];
-      const placeholders: string[] = ["?", "?", "?"];
+      const insertValues: Record<string, unknown> = { id, title: parsed.data.title, url: parsed.data.url };
 
-      if (parsed.data.explanation) { fields.push("explanation"); values.push(parsed.data.explanation); placeholders.push("?"); }
-      if (parsed.data.slug) { fields.push("slug"); values.push(parsed.data.slug); placeholders.push("?"); }
-      if (parsed.data.waktu_mulai) { fields.push("waktu_mulai"); values.push(parsed.data.waktu_mulai); placeholders.push("?"); }
-      if (parsed.data.waktu_berakhir) { fields.push("waktu_berakhir"); values.push(parsed.data.waktu_berakhir); placeholders.push("?"); }
-      if (parsed.data.category_id) { fields.push("category_id"); values.push(parsed.data.category_id); placeholders.push("?"); }
+      if (parsed.data.explanation) insertValues.explanation = parsed.data.explanation;
+      if (parsed.data.slug) insertValues.slug = parsed.data.slug;
+      if (parsed.data.waktu_mulai) insertValues.waktu_mulai = parsed.data.waktu_mulai;
+      if (parsed.data.waktu_berakhir) insertValues.waktu_berakhir = parsed.data.waktu_berakhir;
+      if (parsed.data.category_id) insertValues.category_id = parsed.data.category_id;
       if (parsed.data.display_type && VALID_DISPLAY_TYPES.includes(parsed.data.display_type)) {
-        fields.push("display_type"); values.push(parsed.data.display_type); placeholders.push("?");
+        insertValues.display_type = parsed.data.display_type;
       }
-      if (parsed.data.next_url) { fields.push("next_url"); values.push(parsed.data.next_url); placeholders.push("?"); }
-      if (parsed.data.next_explanation) { fields.push("next_explanation"); values.push(parsed.data.next_explanation); placeholders.push("?"); }
-      if (parsed.data.next_waktu_mulai) { fields.push("next_waktu_mulai"); values.push(parsed.data.next_waktu_mulai); placeholders.push("?"); }
-      if (parsed.data.next_waktu_berakhir) { fields.push("next_waktu_berakhir"); values.push(parsed.data.next_waktu_berakhir); placeholders.push("?"); }
-      if (parsed.data.gallery_images) { fields.push("gallery_images"); values.push(JSON.stringify(parsed.data.gallery_images)); placeholders.push("?"); }
-      if (parsed.data.prioritas !== undefined) { fields.push("prioritas"); values.push(parsed.data.prioritas); placeholders.push("?"); }
-      if (body.uploader) { fields.push("uploader"); values.push(body.uploader); placeholders.push("?"); }
+      if (parsed.data.next_url) insertValues.next_url = parsed.data.next_url;
+      if (parsed.data.next_explanation) insertValues.next_explanation = parsed.data.next_explanation;
+      if (parsed.data.next_waktu_mulai) insertValues.next_waktu_mulai = parsed.data.next_waktu_mulai;
+      if (parsed.data.next_waktu_berakhir) insertValues.next_waktu_berakhir = parsed.data.next_waktu_berakhir;
+      if (parsed.data.gallery_images) insertValues.gallery_images = JSON.stringify(parsed.data.gallery_images);
+      if (parsed.data.prioritas !== undefined) insertValues.prioritas = parsed.data.prioritas;
+      if (body.uploader) insertValues.uploader = body.uploader;
 
-      await execute(
-        `INSERT INTO prakiraan_images (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`,
-        values
-      );
+      await db.insert(schema.prakiraan_images).values(insertValues as any);
 
-      const [data] = await query("SELECT * FROM prakiraan_images WHERE id = ?", [id]);
+      const [data] = await db.select().from(schema.prakiraan_images).where(eq(schema.prakiraan_images.id, id));
       if (data?.gallery_images && typeof data.gallery_images === "string") {
         try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
       }
@@ -89,35 +86,28 @@ export async function POST(req: Request) {
     }
 
     const id = crypto.randomUUID();
-    const fields: string[] = ["id", "title", "url", "slug"];
-    const values: unknown[] = [id, title, publicUrl, slug];
-    const placeholders: string[] = ["?", "?", "?", "?"];
+    const insertValues: Record<string, unknown> = { id, title, url: publicUrl, slug };
 
-    if (categoryId) { fields.push("category_id"); values.push(categoryId); placeholders.push("?"); }
-    if (explanation) { fields.push("explanation"); values.push(explanation); placeholders.push("?"); }
-    if (uploader) { fields.push("uploader"); values.push(uploader); placeholders.push("?"); }
-    if (waktuMulai) { fields.push("waktu_mulai"); values.push(waktuMulai); placeholders.push("?"); }
-    if (waktuBerakhir) { fields.push("waktu_berakhir"); values.push(waktuBerakhir); placeholders.push("?"); }
-    if (nextPublicUrl) { fields.push("next_url"); values.push(nextPublicUrl); placeholders.push("?"); }
-    if (nextExplanation) { fields.push("next_explanation"); values.push(nextExplanation); placeholders.push("?"); }
-    if (nextWaktuMulai) { fields.push("next_waktu_mulai"); values.push(nextWaktuMulai); placeholders.push("?"); }
-    if (nextWaktuBerakhir) { fields.push("next_waktu_berakhir"); values.push(nextWaktuBerakhir); placeholders.push("?"); }
+    if (categoryId) insertValues.category_id = categoryId;
+    if (explanation) insertValues.explanation = explanation;
+    if (uploader) insertValues.uploader = uploader;
+    if (waktuMulai) insertValues.waktu_mulai = waktuMulai;
+    if (waktuBerakhir) insertValues.waktu_berakhir = waktuBerakhir;
+    if (nextPublicUrl) insertValues.next_url = nextPublicUrl;
+    if (nextExplanation) insertValues.next_explanation = nextExplanation;
+    if (nextWaktuMulai) insertValues.next_waktu_mulai = nextWaktuMulai;
+    if (nextWaktuBerakhir) insertValues.next_waktu_berakhir = nextWaktuBerakhir;
     if (displayType && VALID_DISPLAY_TYPES.includes(displayType)) {
-      fields.push("display_type"); values.push(displayType); placeholders.push("?");
+      insertValues.display_type = displayType;
     }
     if (galleryImagesRaw) {
-      fields.push("gallery_images");
-      try { values.push(JSON.stringify(JSON.parse(galleryImagesRaw))); } catch { values.push(galleryImagesRaw); }
-      placeholders.push("?");
+      try { insertValues.gallery_images = JSON.stringify(JSON.parse(galleryImagesRaw)); } catch { insertValues.gallery_images = galleryImagesRaw; }
     }
-    if (prioritasRaw) { fields.push("prioritas"); values.push(parseInt(prioritasRaw, 10)); placeholders.push("?"); }
+    if (prioritasRaw) insertValues.prioritas = parseInt(prioritasRaw, 10);
 
-    await execute(
-      `INSERT INTO prakiraan_images (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`,
-      values
-    );
+    await db.insert(schema.prakiraan_images).values(insertValues as any);
 
-    const [data] = await query("SELECT * FROM prakiraan_images WHERE id = ?", [id]);
+    const [data] = await db.select().from(schema.prakiraan_images).where(eq(schema.prakiraan_images.id, id));
     if (data?.gallery_images && typeof data.gallery_images === "string") {
       try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
     }
@@ -139,40 +129,38 @@ export async function GET(req: Request) {
     const filterExpired = searchParams.get("filterExpired") === "true";
     const activeOnly = searchParams.get("activeOnly") === "true";
 
-    let sql = `SELECT p.*, c.name AS cat_name, c.slug AS cat_slug, c.description AS cat_description, c.icon AS cat_icon FROM prakiraan_images p LEFT JOIN prakiraan_categories c ON p.category_id = c.id`;
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const now = new Date();
 
-    const nowStr = new Date().toISOString();
+    const baseQuery = db.select()
+      .from(schema.prakiraan_images)
+      .leftJoin(schema.prakiraan_categories, eq(schema.prakiraan_images.category_id, schema.prakiraan_categories.id));
 
+    let rows: any[];
     if (filterExpired || activeOnly) {
-      conditions.push("(p.waktu_berakhir IS NULL OR p.waktu_berakhir > ?)");
-      params.push(nowStr);
-      conditions.push("(p.waktu_mulai IS NULL OR p.waktu_mulai <= ?)");
-      params.push(nowStr);
+      rows = await baseQuery.where(
+        and(
+          or(isNull(schema.prakiraan_images.waktu_berakhir), gt(schema.prakiraan_images.waktu_berakhir, now)),
+          or(isNull(schema.prakiraan_images.waktu_mulai), lte(schema.prakiraan_images.waktu_mulai, now)),
+        )
+      ).orderBy(asc(schema.prakiraan_images.created_at));
+    } else {
+      rows = await baseQuery.orderBy(asc(schema.prakiraan_images.created_at));
     }
-
-    if (conditions.length > 0) {
-      sql += " WHERE " + conditions.join(" AND ");
-    }
-
-    sql += " ORDER BY p.created_at ASC";
-
-    const rows = await query(sql, params);
 
     const data = (rows || []).map((row: any) => {
-      if (row.gallery_images && typeof row.gallery_images === "string") {
-        try { row.gallery_images = JSON.parse(row.gallery_images); } catch { /* ignore */ }
+      const img = { ...row.prakiraan_images };
+      if (img.gallery_images && typeof img.gallery_images === "string") {
+        try { img.gallery_images = JSON.parse(img.gallery_images); } catch { /* ignore */ }
       }
-      row.category = row.cat_name ? {
-        id: row.category_id,
-        name: row.cat_name,
-        slug: row.cat_slug,
-        description: row.cat_description,
-        icon: row.cat_icon,
+      const cat = row.prakiraan_categories;
+      img.category = cat ? {
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description,
+        icon: cat.icon,
       } : null;
-      delete row.cat_name; delete row.cat_slug; delete row.cat_description; delete row.cat_icon;
-      return row;
+      return img;
     });
 
     return ok(data);

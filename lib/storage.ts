@@ -4,27 +4,48 @@ import path from "path";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/gif",
+  "application/pdf",
+]);
+const CONVERTIBLE_MIME_TYPES = new Set([
+  "image/jpeg", "image/png", "image/bmp", "image/tiff",
+]);
+
 export interface UploadResult {
   url: string;
   path: string;
 }
 
-const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/bmp", "image/tiff", "image/webp"];
+export class FileValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FileValidationError";
+  }
+}
 
-function isConvertibleImage(mimeType: string): boolean {
-  return IMAGE_MIME_TYPES.includes(mimeType);
+export function validateFile(file: File): void {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new FileValidationError(`File terlalu besar. Maksimal ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+  }
+  if (!ALLOWED_MIME_TYPES.has(file.type)) {
+    throw new FileValidationError(`Tipe file tidak diizinkan: ${file.type}`);
+  }
 }
 
 export async function uploadFile(
   file: File,
   folder: string = "uploads"
 ): Promise<UploadResult> {
+  validateFile(file);
+
   let arrayBuffer = await file.arrayBuffer();
   let buffer = Buffer.from(arrayBuffer);
   let ext = file.name.split(".").pop()?.toLowerCase() || "bin";
   let contentType = file.type;
 
-  if (isConvertibleImage(contentType)) {
+  if (CONVERTIBLE_MIME_TYPES.has(contentType)) {
     try {
       buffer = await sharp(buffer)
         .webp({ quality: 80, effort: 4 })

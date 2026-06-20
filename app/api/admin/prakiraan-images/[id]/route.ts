@@ -1,40 +1,56 @@
 import { logActivity } from "@/lib/activity-log";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq } from "drizzle-orm";
 import { ok, badRequest, notFound, serverError } from "@/lib/response";
+import { prakiraanSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
 
-const ALLOWED_FIELDS = [
-  "title", "url", "explanation", "slug",
-  "waktu_mulai", "waktu_berakhir",
-  "next_url", "next_explanation", "next_waktu_mulai", "next_waktu_berakhir",
-  "display_type", "gallery_images", "category_id", "prioritas", "is_active",
-  "uploader",
-];
+const FIELD_MAP_PI: Record<string, string> = {
+  title: "title",
+  url: "url",
+  explanation: "explanation",
+  slug: "slug",
+  waktu_mulai: "waktu_mulai",
+  waktu_berakhir: "waktu_berakhir",
+  next_url: "next_url",
+  next_explanation: "next_explanation",
+  next_waktu_mulai: "next_waktu_mulai",
+  next_waktu_berakhir: "next_waktu_berakhir",
+  display_type: "display_type",
+  gallery_images: "gallery_images",
+  category_id: "category_id",
+  prioritas: "prioritas",
+  is_active: "is_active",
+  uploader: "uploader",
+};
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     if (!id) return badRequest("Invalid id");
 
-    const sql = `SELECT p.*, c.name AS cat_name, c.slug AS cat_slug, c.description AS cat_description, c.icon AS cat_icon FROM prakiraan_images p LEFT JOIN prakiraan_categories c ON p.category_id = c.id WHERE p.id = ?`;
-    const rows = await query(sql, [id]);
-    const data = rows[0];
+    const rows = await db.select()
+      .from(schema.prakiraan_images)
+      .leftJoin(schema.prakiraan_categories, eq(schema.prakiraan_images.category_id, schema.prakiraan_categories.id))
+      .where(eq(schema.prakiraan_images.id, id));
+    const raw = rows[0];
 
-    if (!data) return notFound();
+    if (!raw) return notFound();
 
+    const data: any = { ...raw.prakiraan_images };
     if (data.gallery_images && typeof data.gallery_images === "string") {
       try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
     }
 
-    data.category = data.cat_name ? {
-      id: data.category_id,
-      name: data.cat_name,
-      slug: data.cat_slug,
-      description: data.cat_description,
-      icon: data.cat_icon,
+    const cat = raw.prakiraan_categories;
+    data.category = cat ? {
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description,
+      icon: cat.icon,
     } : null;
-    delete data.cat_name; delete data.cat_slug; delete data.cat_description; delete data.cat_icon;
 
     return ok(data);
   } catch (error) {
@@ -47,10 +63,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params;
     if (!id) return badRequest("Invalid id");
 
-    const [data] = await query("SELECT * FROM prakiraan_images WHERE id = ?", [id]);
+    const [data] = await db.select().from(schema.prakiraan_images).where(eq(schema.prakiraan_images.id, id));
     if (!data) return notFound();
 
-    await execute("DELETE FROM prakiraan_images WHERE id = ?", [id]);
+    await db.delete(schema.prakiraan_images).where(eq(schema.prakiraan_images.id, id));
 
     logActivity(
       req.headers.get("x-auth-user-id"),
@@ -69,10 +85,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!id) return badRequest("Invalid id");
 
     const body = await req.json();
+    const parsed = prakiraanSchema.partial().safeParse(body);
+    if (!parsed.success) {
+      return badRequest(parsed.error.errors.map(e => e.message).join(", "));
+    }
 
+    const d = parsed.data as Record<string, unknown>;
     const cleanData: Record<string, unknown> = {};
-    for (const key of ALLOWED_FIELDS) {
-      if (body[key] !== undefined) cleanData[key] = body[key];
+    for (const key of Object.keys(FIELD_MAP_PI)) {
+      if (d[key] !== undefined) cleanData[FIELD_MAP_PI[key]] = d[key];
     }
 
     if (Object.keys(cleanData).length === 0) {
@@ -83,29 +104,29 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       cleanData.gallery_images = JSON.stringify(cleanData.gallery_images);
     }
 
-    const setClauses = Object.keys(cleanData).map((key) => `${key} = ?`).join(", ");
-    const values = Object.values(cleanData);
+    await db.update(schema.prakiraan_images).set(cleanData).where(eq(schema.prakiraan_images.id, id));
 
-    await execute(`UPDATE prakiraan_images SET ${setClauses} WHERE id = ?`, [...values, id]);
+    const rows = await db.select()
+      .from(schema.prakiraan_images)
+      .leftJoin(schema.prakiraan_categories, eq(schema.prakiraan_images.category_id, schema.prakiraan_categories.id))
+      .where(eq(schema.prakiraan_images.id, id));
+    const raw = rows[0];
 
-    const sql = `SELECT p.*, c.name AS cat_name, c.slug AS cat_slug, c.description AS cat_description, c.icon AS cat_icon FROM prakiraan_images p LEFT JOIN prakiraan_categories c ON p.category_id = c.id WHERE p.id = ?`;
-    const rows = await query(sql, [id]);
-    const data = rows[0];
+    if (!raw) return notFound();
 
-    if (!data) return notFound();
-
+    const data: any = { ...raw.prakiraan_images };
     if (data.gallery_images && typeof data.gallery_images === "string") {
       try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
     }
 
-    data.category = data.cat_name ? {
-      id: data.category_id,
-      name: data.cat_name,
-      slug: data.cat_slug,
-      description: data.cat_description,
-      icon: data.cat_icon,
+    const cat = raw.prakiraan_categories;
+    data.category = cat ? {
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description,
+      icon: cat.icon,
     } : null;
-    delete data.cat_name; delete data.cat_slug; delete data.cat_description; delete data.cat_icon;
 
     logActivity(
       req.headers.get("x-auth-user-id"),

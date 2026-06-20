@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Camera, Trash2, CheckCircle2, ChevronRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface BukuTamuFormData {
   nama: string;
@@ -14,6 +15,7 @@ interface BukuTamuFormData {
 }
 
 export default function BukuTamuPage() {
+  usePageTitle("Buku Tamu");
   const { register, handleSubmit, formState: { errors }, reset } = useForm<BukuTamuFormData>();
   const [submitted, setSubmitted] = useState(false);
   const [fotoData, setFotoData] = useState<string | null>(null);

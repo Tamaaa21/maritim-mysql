@@ -134,17 +134,21 @@ export default function KegiatanManager() {
               <div key={item.id} className="p-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-gray-50/50 transition-colors">
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1 min-w-0">
                   <div className="flex-shrink-0 flex gap-1">
-                    {(item.image_urls && item.image_urls.length > 0 ? item.image_urls : (item.url ? [item.url] : [])).filter(Boolean).slice(0, 3).map((url: string, i: number) => (
-                      <div key={i} className="w-16 h-12 overflow-hidden rounded-md bg-gray-100 relative flex items-center justify-center border border-gray-200 shadow-sm">
-                        <img src={url} alt={item.title} loading="lazy" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        {item.youtube_url && i === 0 && (
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {!item.url && (!item.image_urls || item.image_urls.length === 0) && item.youtube_url && (
+                    {(() => {
+                      const urls = Array.isArray(item.image_urls) ? item.image_urls : [];
+                      const displayUrls = urls.length > 0 ? urls : (item.url ? [item.url] : []);
+                      return displayUrls.filter(Boolean).slice(0, 3).map((url: string, i: number) => (
+                        <div key={i} className="w-16 h-12 overflow-hidden rounded-md bg-gray-100 relative flex items-center justify-center border border-gray-200 shadow-sm">
+                          <img src={url} alt={item.title} loading="lazy" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          {item.youtube_url && i === 0 && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                            </div>
+                          )}
+                        </div>
+                      ));
+                    })()}
+                    {!item.url && (!Array.isArray(item.image_urls) || item.image_urls.length === 0) && item.youtube_url && (
                       <div className="w-16 h-12 overflow-hidden rounded-md bg-gray-200 flex items-center justify-center border border-gray-200">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="#999"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                       </div>

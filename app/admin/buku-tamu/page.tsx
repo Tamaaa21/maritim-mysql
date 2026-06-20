@@ -41,8 +41,9 @@ export default function BukuTamuPage() {
     try {
       const response = await fetch("/api/admin/buku-tamu");
       const result = await response.json();
-      setData(result || []);
-      setFiltered(result || []);
+      const items = Array.isArray(result) ? result : (result?.data || []);
+      setData(items);
+      setFiltered(items);
     } catch (error) {
       console.error(error);
     } finally {

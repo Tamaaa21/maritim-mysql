@@ -92,8 +92,9 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
       if (b?.success) {
         const data = b.data.map((d: any) => {
           const imgs: string[] = [];
-          if (d.image_urls && d.image_urls.length > 0) {
-            imgs.push(...d.image_urls.filter(Boolean));
+          const imgUrls = Array.isArray(d.image_urls) ? d.image_urls : [];
+          if (imgUrls.length > 0) {
+            imgs.push(...imgUrls.filter(Boolean));
           } else if (d.url && !d.url.includes('img.youtube.com')) {
             imgs.push(d.url);
           } else if (d.url) {
@@ -170,9 +171,10 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
               onClick={() => openLightbox(item)}
             >
               {item.image && !brokenImgs.has(item.image) && isImageFile(item.image) ? (
-                <img
-                  src={item.image}
-                  alt={item.title}
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      loading="lazy"
                   onError={() => markBroken(item.image)}
                   className="w-full h-full object-contain bg-gray-100 group-hover:scale-105 transition-transform duration-500"
                 />

@@ -1,19 +1,18 @@
 import crypto from "node:crypto";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq, desc } from "drizzle-orm";
 import { uploadFile, deleteFile } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
 import { ok, badRequest, notFound, serverError } from "@/lib/response";
-import type { Publication } from "@/lib/types";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rows = await query<any>(
-      "SELECT * FROM publications ORDER BY created_at DESC"
-    );
-    return ok(rows as Publication[]);
+    const rows = await db.select().from(schema.publications).orderBy(desc(schema.publications.created_at));
+    return ok(rows);
   } catch (error) {
     return serverError(error);
   }
@@ -29,6 +28,8 @@ export async function POST(req: Request) {
     const title = form.get("title")?.toString() || "";
     const description = form.get("description")?.toString() || "";
     const uploader = req.headers.get("x-auth-user-username") || form.get("uploader")?.toString() || null;
+
+    if (!title) return badRequest("Judul harus diisi");
 
     let storedUrl = url;
     let filePath: string | null = null;
@@ -47,19 +48,21 @@ export async function POST(req: Request) {
     if (!storedUrl) return badRequest("No file or url provided");
 
     const id = crypto.randomUUID();
-    await execute(
-      "INSERT INTO publications (id, title, description, url, cover_url, file_path, uploader) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [id, title, description, storedUrl, storedCoverUrl, filePath, uploader]
-    );
+    await db.insert(schema.publications).values({
+      id,
+      title,
+      description,
+      url: storedUrl,
+      cover_url: storedCoverUrl,
+      file_path: filePath,
+      uploader,
+    });
 
-    const rows = await query<any>(
-      "SELECT * FROM publications WHERE id = ?",
-      [id]
-    );
+    const rows = await db.select().from(schema.publications).where(eq(schema.publications.id, id));
     const data = rows[0];
 
     logActivity(req.headers.get("x-auth-user-id"), `Menambah publikasi: ${title}`, req.headers.get("x-auth-user-username"));
-    return ok(data as Publication);
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }
@@ -71,10 +74,7 @@ export async function DELETE(req: Request) {
     const id = url.searchParams.get("id");
     if (!id) return badRequest("id required");
 
-    const rows = await query<any>(
-      "SELECT * FROM publications WHERE id = ?",
-      [id]
-    );
+    const rows = await db.select().from(schema.publications).where(eq(schema.publications.id, id));
     const data = rows[0];
     if (!data) return notFound();
 
@@ -82,10 +82,10 @@ export async function DELETE(req: Request) {
       await deleteFile(data.file_path);
     }
 
-    await execute("DELETE FROM publications WHERE id = ?", [id]);
+    await db.delete(schema.publications).where(eq(schema.publications.id, id));
 
     logActivity(req.headers.get("x-auth-user-id"), `Menghapus publikasi: ${data?.title || id}`, req.headers.get("x-auth-user-username"));
-    return ok(data as Publication);
+    return ok(data);
   } catch (error) {
     return serverError(error);
   }

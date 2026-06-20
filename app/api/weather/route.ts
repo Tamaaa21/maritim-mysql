@@ -137,8 +137,8 @@ export async function GET(req: NextRequest) {
     };
 
     return new Response(JSON.stringify({ success: true, data }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ success: false, error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  } catch {
+    return new Response(JSON.stringify({ success: false, message: "Gagal mengambil data cuaca" }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
 

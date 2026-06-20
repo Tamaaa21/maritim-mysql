@@ -1,9 +1,23 @@
 import crypto from "node:crypto";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq, desc } from "drizzle-orm";
 import { uploadMultipleFiles } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
 import { ok, okCached, badRequest, serverError } from "@/lib/response";
-import type { KegiatanDocument } from "@/lib/types";
+
+
+const FIELD_MAP_KD_CREATE: Record<string, string> = {
+  id: "id",
+  title: "title",
+  description: "description",
+  url: "url",
+  file_path: "file_path",
+  file_type: "file_type",
+  event_date: "event_date",
+  image_urls: "image_urls",
+  youtube_url: "youtube_url",
+  category: "category",
+};
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,24 +71,21 @@ export async function POST(req: Request) {
     if (event_date) insertData.event_date = event_date;
     if (youtube_url) insertData.youtube_url = youtube_url;
 
-    const columns = Object.keys(insertData).join(", ");
-    const placeholders = Object.keys(insertData).map(() => "?").join(", ");
-    await execute(
-      `INSERT INTO kegiatan_documents (${columns}) VALUES (${placeholders})`,
-      Object.values(insertData)
-    );
+    const values: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(insertData)) {
+      const schemaKey = FIELD_MAP_KD_CREATE[key];
+      if (schemaKey) values[schemaKey] = value;
+    }
+    await db.insert(schema.kegiatan_documents).values(values as any);
 
-    const rows = await query<any>(
-      "SELECT * FROM kegiatan_documents WHERE id = ?",
-      [id]
-    );
+    const rows = await db.select().from(schema.kegiatan_documents).where(eq(schema.kegiatan_documents.id, id));
     const result = rows[0];
     if (result?.image_urls && typeof result.image_urls === "string") {
       try { result.image_urls = JSON.parse(result.image_urls); } catch {}
     }
 
     logActivity(req.headers.get("x-auth-user-id"), `Menambah dokumentasi kegiatan: ${title}`, req.headers.get("x-auth-user-username"));
-    return ok(result as KegiatanDocument);
+    return ok(result);
   } catch (error) {
     return serverError(error);
   }
@@ -82,16 +93,14 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const rows = await query<any>(
-      "SELECT * FROM kegiatan_documents ORDER BY created_at DESC"
-    );
+    const rows = await db.select().from(schema.kegiatan_documents).orderBy(desc(schema.kegiatan_documents.created_at));
     const data = rows.map((r: any) => {
       if (r.image_urls && typeof r.image_urls === "string") {
         try { r.image_urls = JSON.parse(r.image_urls); } catch {}
       }
       return r;
     });
-    return okCached(data as KegiatanDocument[]);
+    return okCached(data);
   } catch (error) {
     return serverError(error);
   }

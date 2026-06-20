@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq } from "drizzle-orm";
 import { verifyPassword, hashPassword } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 import { changePasswordSchema } from "@/lib/validation";
@@ -22,10 +23,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Sesi tidak valid, silakan login ulang" }, { status: 401 });
     }
 
-    const rows = await query<any>(
-      "SELECT id, password FROM users WHERE id = ? LIMIT 1",
-      [userId]
-    );
+    const rows = await db.select({ id: schema.users.id, password: schema.users.password })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
     const user = rows[0];
 
     if (!user) return notFound("Akun tidak ditemukan");
@@ -35,10 +36,9 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await hashPassword(newPassword);
 
-    await execute(
-      "UPDATE users SET password = ? WHERE id = ?",
-      [hashedPassword, user.id]
-    );
+    await db.update(schema.users)
+      .set({ password: hashedPassword })
+      .where(eq(schema.users.id, user.id));
 
     logActivity(userId, "Mengubah kata sandi", request.headers.get("x-auth-user-username"));
 

@@ -1,29 +1,16 @@
 import { NextRequest } from "next/server";
-import crypto from "crypto";
-import { query, execute } from "@/lib/mysql";
+import { getAllBukuTamu, deleteBukuTamu, deleteAllBukuTamu } from "@/services/buku-tamu.service";
+import { getUserId, getUsername, isAdmin } from "@/services/admin.service";
 import { logActivity } from "@/lib/activity-log";
 import { ok, badRequest, serverError } from "@/lib/response";
-import type { BukuTamu } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getUserId(request: NextRequest) {
-  return request.headers.get("x-auth-user-id") || "";
-}
-
-function getUsername(request: NextRequest) {
-  return request.headers.get("x-auth-user-username") || "";
-}
-
-function getRole(request: NextRequest) {
-  return request.headers.get("x-auth-user-role") || "";
-}
-
 export async function GET() {
   try {
-    const rows = await query("SELECT * FROM buku_tamu ORDER BY created_at DESC");
-    return ok(rows as BukuTamu[]);
+    const rows = await getAllBukuTamu();
+    return ok(rows);
   } catch (error) {
     console.error(error);
     return serverError(error);
@@ -31,8 +18,7 @@ export async function GET() {
 }
 
 export async function DELETE(request: NextRequest) {
-  const role = getRole(request);
-  if (role !== "super_admin" && role !== "admin") {
+  if (!isAdmin(request)) {
     return badRequest("Forbidden");
   }
 
@@ -49,15 +35,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (ids.length > 0) {
-      await execute("DELETE FROM buku_tamu WHERE id IN (?)", [ids]);
+      await deleteBukuTamu(ids);
       logActivity(getUserId(request), `Menghapus ${ids.length} data buku tamu`, getUsername(request));
       return ok(null, "Data terpilih berhasil dihapus");
     } else {
-      await execute("DELETE FROM buku_tamu WHERE id IS NOT NULL");
+      await deleteAllBukuTamu();
       logActivity(getUserId(request), "Menghapus semua data buku tamu", getUsername(request));
       return ok(null, "Semua data berhasil dihapus");
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     return serverError(error);
   }

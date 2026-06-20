@@ -1,19 +1,18 @@
 import crypto from "node:crypto";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq, asc } from "drizzle-orm";
 import { logActivity } from "@/lib/activity-log";
 import { layananCardSchema } from "@/lib/validation";
 import { okCached, ok, badRequest, serverError } from "@/lib/response";
-import type { LayananCard } from "@/lib/types";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rows = await query<any>(
-      "SELECT * FROM layanan_cards ORDER BY created_at ASC"
-    );
-    return okCached(rows as LayananCard[]);
+    const rows = await db.select().from(schema.layanan_cards).orderBy(asc(schema.layanan_cards.created_at));
+    return okCached(rows);
   } catch (error) {
     return serverError(error);
   }
@@ -28,25 +27,19 @@ export async function POST(req: Request) {
     }
 
     const id = crypto.randomUUID();
-    await execute(
-      "INSERT INTO layanan_cards (id, nama_layanan, deskripsi, url_google_form, cover_url) VALUES (?, ?, ?, ?, ?)",
-      [
-        id,
-        parsed.data.nama_layanan,
-        parsed.data.deskripsi || null,
-        parsed.data.url_google_form || null,
-        parsed.data.cover_url || null,
-      ]
-    );
+    await db.insert(schema.layanan_cards).values({
+      id,
+      nama_layanan: parsed.data.nama_layanan,
+      deskripsi: parsed.data.deskripsi || null,
+      url_google_form: parsed.data.url_google_form || null,
+      cover_url: parsed.data.cover_url || null,
+    });
 
-    const rows = await query<any>(
-      "SELECT * FROM layanan_cards WHERE id = ?",
-      [id]
-    );
+    const rows = await db.select().from(schema.layanan_cards).where(eq(schema.layanan_cards.id, id));
     const result = rows[0];
 
     logActivity(req.headers.get("x-auth-user-id"), `Menambah layanan: ${parsed.data.nama_layanan}`, req.headers.get("x-auth-user-username"));
-    return ok(result as LayananCard);
+    return ok(result);
   } catch (error) {
     return serverError(error);
   }

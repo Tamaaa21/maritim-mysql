@@ -1,12 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { clearAuthCookie } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
+import { getUserId, getUsername } from "@/services/admin.service";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  const response = NextResponse.json({ success: true, message: "Logged out" });
+  try {
+    logActivity(getUserId(request), "Logout dari panel admin", getUsername(request));
+  } catch {
+    // ignore log errors on logout
+  }
+
+  const response = NextResponse.json({ success: true, message: "Logout berhasil" });
   clearAuthCookie(response);
-  logActivity(request.headers.get("x-auth-user-id"), "Logout dari panel admin", request.headers.get("x-auth-user-username"));
   return response;
 }

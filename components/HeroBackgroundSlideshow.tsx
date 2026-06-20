@@ -21,7 +21,7 @@ export default function HeroBackgroundSlideshow({ onImageChange }: { onImageChan
           if (urls.length) setImages(urls);
         }
       } catch (e) {
-        // keep defaults on error
+        console.error("Gagal memuat hero images:", e);
       }
     }
     fetchHero();

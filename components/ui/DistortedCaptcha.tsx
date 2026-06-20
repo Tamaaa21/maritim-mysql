@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { RefreshCw } from 'lucide-react';
 
 export interface DistortedCaptchaRef {
@@ -26,7 +26,7 @@ const DistortedCaptcha = forwardRef<DistortedCaptchaRef, DistortedCaptchaProps>(
     return result;
   };
 
-  const drawCaptcha = () => {
+  const drawCaptcha = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -35,18 +35,13 @@ const DistortedCaptcha = forwardRef<DistortedCaptchaRef, DistortedCaptchaProps>(
     const width = canvas.width;
     const height = canvas.height;
     
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
-    
-    // Draw background
-    ctx.fillStyle = '#f3f4f6'; // gray-100
+    ctx.fillStyle = '#f3f4f6';
     ctx.fillRect(0, 0, width, height);
 
-    // Generate new text
     const text = generateRandomString(6);
     setCaptchaText(text);
 
-    // Draw lines
     for (let i = 0; i < 7; i++) {
       ctx.beginPath();
       ctx.moveTo(Math.random() * width, Math.random() * height);
@@ -56,7 +51,6 @@ const DistortedCaptcha = forwardRef<DistortedCaptchaRef, DistortedCaptchaProps>(
       ctx.stroke();
     }
 
-    // Draw dots
     for (let i = 0; i < 50; i++) {
       ctx.beginPath();
       ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 2, 0, 2 * Math.PI);
@@ -64,7 +58,6 @@ const DistortedCaptcha = forwardRef<DistortedCaptchaRef, DistortedCaptchaProps>(
       ctx.fill();
     }
 
-    // Draw text
     ctx.font = 'bold 28px sans-serif';
     ctx.textBaseline = 'middle';
     
@@ -77,18 +70,18 @@ const DistortedCaptcha = forwardRef<DistortedCaptchaRef, DistortedCaptchaProps>(
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(angle);
-      ctx.fillStyle = '#111827'; // gray-900
+      ctx.fillStyle = '#111827';
       ctx.fillText(char, 0, 0);
       ctx.restore();
     }
     
     setInputValue('');
     if (onValidateChange) onValidateChange(false);
-  };
+  }, [onValidateChange]);
 
   useEffect(() => {
     drawCaptcha();
-  }, []);
+  }, [drawCaptcha]);
 
   useImperativeHandle(ref, () => ({
     validate: (input: string) => {

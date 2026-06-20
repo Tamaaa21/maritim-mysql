@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -181,15 +181,15 @@ export default function DisplayPage() {
     return () => clearInterval(t);
   }, [pamphletImages, pamphletIndex, isPlaying]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (pamphletImages.length === 0) return;
     setPamphletIndex((s) => (s - 1 + pamphletImages.length) % pamphletImages.length);
-  };
+  }, [pamphletImages.length]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (pamphletImages.length === 0) return;
     setPamphletIndex((s) => (s + 1) % pamphletImages.length);
-  };
+  }, [pamphletImages.length]);
 
   // Load YouTube Iframe API Script on mount
   useEffect(() => {
@@ -282,7 +282,7 @@ export default function DisplayPage() {
       }
       ytPlayerRef.current = null;
     };
-  }, [pamphletImages, pamphletIndex]);
+  }, [pamphletImages, pamphletIndex, handleNext, isMuted, volume]);
 
   // Synchronize mute/volume state changes dynamically to active players
   useEffect(() => {

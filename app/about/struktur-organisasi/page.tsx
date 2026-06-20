@@ -1,194 +1,70 @@
-"use client";
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { getStrukturOrganisasi } from "@/services/public.service";
+import type { Metadata } from "next";
 
-interface StrukturItem {
-  id: string;
-  jabatan: string;
-  nama?: string;
-  inisial: string; // Used to store photo URL or initial
-  deskripsi: string;
-  urutan: number;
-}
+export const metadata: Metadata = {
+  title: "Struktur Organisasi",
+  description: "Struktur Organisasi BMKG Maritim Tegal",
+};
 
-export default function StrukturOrganisasiPage() {
-  const [items, setItems] = useState<StrukturItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/struktur-organisasi")
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.success && Array.isArray(res.data)) {
-          setItems(res.data);
-        }
-      })
-      .catch((err) => console.error("Gagal memuat struktur organisasi:", err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  // Separate Head of Station from other sections
-  // Kepala Stasiun is usually the one with inisial "K" or lowest urutan
-  const kepala = items.find((item) => item.inisial.toUpperCase() === "K" || item.urutan === 1);
-  const staff = items.filter((item) => item.id !== kepala?.id);
+export default async function StrukturOrganisasiPage() {
+  const items = await getStrukturOrganisasi();
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col justify-between">
+    <main className="min-h-screen bg-slate-50 flex flex-col justify-between">
       <div>
         <Navbar />
         
-        {/* Hero Section */}
+        {/* Hero */}
         <section className="pt-28 pb-12 bg-gradient-to-b from-[#003399] to-[#002266] text-white">
           <div className="max-w-7xl mx-auto px-6 md:px-16 text-center">
-            <Link 
-              href="/about" 
-              className="inline-flex items-center gap-2 text-blue-200 hover:text-white mb-6 text-sm font-medium transition-colors group"
-            >
+            <Link href="/about" className="inline-flex items-center gap-2 text-blue-200 hover:text-white mb-6 text-sm font-medium transition-colors group">
               <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
               Kembali ke Tentang Kami
             </Link>
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">Struktur Organisasi</h1>
             <p className="text-blue-100 mt-3 max-w-2xl mx-auto text-sm md:text-base">
-              Susunan Organisasi Stasiun Meteorologi Maritim Tegal.
+              Struktur organisasi BMKG Stasiun Meteorologi Maritim Tegal
             </p>
           </div>
         </section>
 
-        {/* Content Section */}
-        <section className="py-16">
-          <div className="max-w-6xl mx-auto px-6">
-            
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="w-10 h-10 border-4 border-[#003399] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-gray-500 text-sm">Memuat data struktur organisasi...</p>
-              </div>
-            ) : items.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                Tidak ada data struktur organisasi.
-              </div>
-            ) : (
-              /* Hierarchical Tree Visual */
-              <div className="flex flex-col items-center">
-                
-                {/* Leader (Level 1) */}
-                {kepala && (
-                  <div className="relative flex flex-col items-center">
-                    <div className="bg-white border-2 border-[#003399] rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 w-72">
-                      {kepala.inisial.startsWith("http") || kepala.inisial.startsWith("/") ? (
-                        <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 mb-4 shadow-md overflow-hidden border-2 border-[#003399]">
-                          <img src={kepala.inisial} alt={kepala.jabatan} className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-20 h-20 mx-auto rounded-full bg-[#003399] text-white flex items-center justify-center font-bold text-2xl mb-4 shadow-md uppercase">
-                          {kepala.inisial}
-                        </div>
-                      )}
-                      <h3 className="text-gray-900 font-bold text-lg">{kepala.jabatan}</h3>
-                      {kepala.nama && <p className="text-gray-500 text-sm mt-1 font-medium">{kepala.nama}</p>}
-                      <span className="inline-block mt-3 px-3 py-1 bg-blue-50 text-[#003399] text-xs font-semibold rounded-full">
-                        {kepala.deskripsi || "Pimpinan UPT"}
-                      </span>
+        {/* Content */}
+        <section className="py-16 bg-[#f8fafc]">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="space-y-6">
+              {items.map((item) => (
+                <div key={item.id} className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#003399] to-[#002266] text-white flex items-center justify-center font-extrabold text-lg shrink-0 shadow-md">
+                      {item.inisial?.charAt(0) || "?"}
                     </div>
-                    
-                    {/* Connecting Line Down from Leader */}
-                    {staff.length > 0 && <div className="hidden md:block w-0.5 h-12 bg-gray-300"></div>}
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-slate-800 text-base md:text-lg truncate">{item.nama}</h3>
+                      <p className="text-[#003399] font-semibold text-sm">{item.jabatan}</p>
+                    </div>
                   </div>
-                )}
-
-                {/* Horizontal Connector Line for the branches */}
-                {staff.length > 1 && (
-                  <div className="hidden md:flex items-center w-3/4 relative">
-                    <div className="w-1/2 h-0.5 bg-gray-300"></div>
-                    <div className="w-1/2 h-0.5 bg-gray-300"></div>
-                  </div>
-                )}
-
-                {/* Vertical line dropdowns for each branch on desktop */}
-                {staff.length > 1 && (
-                  <div className="hidden md:flex justify-between w-3/4 mb-4">
-                    {staff.map((_, idx) => {
-                      // We need endpoints and a middle line
-                      let alignClass = "justify-center";
-                      if (idx === 0) alignClass = "justify-start";
-                      if (idx === staff.length - 1) alignClass = "justify-end";
-                      return (
-                        <div key={idx} className={`flex w-full ${alignClass}`}>
-                          <div className="w-0.5 h-8 bg-gray-300"></div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Single staff line on desktop if only 1 staff */}
-                {staff.length === 1 && (
-                  <div className="hidden md:block w-0.5 h-8 bg-gray-300 mb-4"></div>
-                )}
-
-                {/* Staff Sections (Level 2) */}
-                <div className={`grid grid-cols-1 ${
-                  staff.length === 2 ? "md:grid-cols-2 max-w-3xl" : 
-                  staff.length === 3 ? "md:grid-cols-3 max-w-5xl" : 
-                  staff.length >= 4 ? "md:grid-cols-4 max-w-6xl" : "md:grid-cols-1"
-                } gap-6 w-full mt-4 md:mt-0`}>
-                  
-                  {staff.map((member) => {
-                    // Predefined matching bg colors for O, D, P or fallback
-                    let bgIconColor = "bg-[#0ea5a6]";
-                    const ini = member.inisial.toUpperCase();
-                    if (ini === "O") bgIconColor = "bg-[#0ea5a6]";
-                    else if (ini === "D") bgIconColor = "bg-[#f59e0b]";
-                    else if (ini === "P") bgIconColor = "bg-[#ef4444]";
-                    else bgIconColor = "bg-[#64748b]"; // generic gray for extra categories
-                    
-                    return (
-                      <div 
-                        key={member.id}
-                        className="bg-white border border-gray-150 rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col justify-between"
-                      >
-                        <div>
-                          {member.inisial.startsWith("http") || member.inisial.startsWith("/") ? (
-                            <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 mb-4 shadow-sm overflow-hidden border border-gray-200">
-                              <img src={member.inisial} alt={member.jabatan} className="w-full h-full object-cover" />
-                            </div>
-                          ) : (
-                            <div className={`w-16 h-16 mx-auto rounded-full ${bgIconColor} text-white flex items-center justify-center font-bold text-lg mb-4 shadow-sm uppercase`}>
-                              {member.inisial}
-                            </div>
-                          )}
-                          <h4 className="text-gray-900 font-bold text-base">{member.jabatan}</h4>
-                          {member.nama && <p className="text-gray-500 text-sm mt-1">{member.nama}</p>}
-                        </div>
-                        {member.deskripsi && (
-                          <div className="mt-6 pt-4 border-t border-gray-50">
-                            <p className="text-xs text-gray-450 italic leading-relaxed">{member.deskripsi}</p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
+                  {item.deskripsi && (
+                    <p className="mt-4 text-slate-600 text-sm leading-relaxed border-t border-slate-100 pt-4">
+                      {item.deskripsi}
+                    </p>
+                  )}
                 </div>
+              ))}
+              {items.length === 0 && (
+                <p className="text-center text-slate-400 py-12">Belum ada data struktur organisasi.</p>
+              )}
+            </div>
 
-              </div>
-            )}
-
-            {/* Back Button Bottom */}
-            <div className="mt-16 text-center">
-              <Link 
-                href="/about" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#003399] hover:bg-[#002266] text-white text-sm font-semibold rounded-full transition-all shadow-md hover:shadow-lg group"
-              >
+            <div className="mt-10 text-center">
+              <Link href="/about" className="inline-flex items-center gap-2 px-6 py-3 bg-[#003399] hover:bg-[#002266] text-white text-sm font-semibold rounded-full transition-all shadow-md hover:shadow-lg group">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 Kembali ke Tentang Kami
               </Link>
             </div>
-
           </div>
         </section>
       </div>

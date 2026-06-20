@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, LogIn, User, Lock, Droplets, Wind } from "lucide-react";
+import { AlertCircle, LogIn, User, Lock } from "lucide-react";
 import { Input } from '@/components/ui/input';
 import DistortedCaptcha, { DistortedCaptchaRef } from "@/components/ui/DistortedCaptcha";
 

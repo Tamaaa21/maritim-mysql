@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq, asc } from "drizzle-orm";
 import { hashPassword, forbidden } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
+import { createUserSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,13 +28,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const data = await query(
-      "SELECT id, username, role, nama, is_active, created_at FROM users ORDER BY created_at ASC"
-    );
+    const data = await db.select({
+      id: schema.users.id,
+      username: schema.users.username,
+      role: schema.users.role,
+      nama: schema.users.nama,
+      is_active: schema.users.is_active,
+      created_at: schema.users.created_at,
+    })
+      .from(schema.users)
+      .orderBy(asc(schema.users.created_at));
     return NextResponse.json({ success: true, data: data || [] });
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Gagal mengambil data pengguna" }, { status: 500 });
   }
 }
 
@@ -44,7 +53,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { username, password, role: newRole, nama } = body;
+    const parsed = createUserSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, message: parsed.error.errors.map(e => e.message).join(", ") }, { status: 400 });
+    }
+
+    const { username, password, role: newRole, nama } = parsed.data;
 
     if (!username || !password) {
       return NextResponse.json({ success: false, message: "Username dan password harus diisi" }, { status: 400 });
@@ -58,10 +72,10 @@ export async function POST(request: NextRequest) {
       return forbidden("Hanya Super Admin yang dapat membuat akun Super Admin");
     }
 
-    const existing = await query<any>(
-      "SELECT id FROM users WHERE username = ? LIMIT 1",
-      [username]
-    );
+    const existing = await db.select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.username, username))
+      .limit(1);
 
     if (existing.length > 0) {
       return NextResponse.json({ success: false, message: "Username sudah digunakan" }, { status: 409 });
@@ -70,21 +84,31 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password);
     const id = crypto.randomUUID();
 
-    await execute(
-      "INSERT INTO users (id, username, password, role, nama) VALUES (?, ?, ?, ?, ?)",
-      [id, username, hashedPassword, newRole || "karyawan", nama || username]
-    );
+    await db.insert(schema.users).values({
+      id,
+      username,
+      password: hashedPassword,
+      role: newRole || "karyawan",
+      nama: nama || username,
+    });
 
-    const rows = await query<any>(
-      "SELECT id, username, role, nama, is_active, created_at FROM users WHERE id = ? LIMIT 1",
-      [id]
-    );
+    const rows = await db.select({
+      id: schema.users.id,
+      username: schema.users.username,
+      role: schema.users.role,
+      nama: schema.users.nama,
+      is_active: schema.users.is_active,
+      created_at: schema.users.created_at,
+    })
+      .from(schema.users)
+      .where(eq(schema.users.id, id))
+      .limit(1);
     const data = rows[0];
 
     logActivity(getUserId(request), `Menambah pengguna: ${username}`, getUsername(request));
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Gagal menambah pengguna" }, { status: 500 });
   }
 }

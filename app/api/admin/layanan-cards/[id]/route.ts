@@ -1,8 +1,9 @@
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq } from "drizzle-orm";
 import { logActivity } from "@/lib/activity-log";
 import { layananCardSchema } from "@/lib/validation";
 import { ok, badRequest, serverError } from "@/lib/response";
-import type { LayananCard } from "@/lib/types";
+
 
 export const runtime = "nodejs";
 
@@ -10,16 +11,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   try {
     const { id } = await params;
 
-    const rows = await query<any>(
-      "SELECT * FROM layanan_cards WHERE id = ?",
-      [id]
-    );
+    const rows = await db.select().from(schema.layanan_cards).where(eq(schema.layanan_cards.id, id));
     const row = rows[0];
 
-    await execute("DELETE FROM layanan_cards WHERE id = ?", [id]);
+    await db.delete(schema.layanan_cards).where(eq(schema.layanan_cards.id, id));
 
     logActivity(req.headers.get("x-auth-user-id"), `Menghapus layanan: ${row?.nama_layanan || id}`, req.headers.get("x-auth-user-username"));
-    return ok(row as LayananCard);
+    return ok(row);
   } catch (error) {
     return serverError(error);
   }
@@ -41,28 +39,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (parsed.data.url_google_form !== undefined) updateObj.url_google_form = parsed.data.url_google_form || null;
     if (parsed.data.cover_url !== undefined) updateObj.cover_url = parsed.data.cover_url || null;
 
-    const setClauses: string[] = [];
-    const values: unknown[] = [];
-    for (const [key, value] of Object.entries(updateObj)) {
-      setClauses.push(`${key} = ?`);
-      values.push(value);
+    if (Object.keys(updateObj).length > 0) {
+      await db.update(schema.layanan_cards).set(updateObj).where(eq(schema.layanan_cards.id, id));
     }
-    setClauses.push("updated_at = NOW()");
-    values.push(id);
 
-    await execute(
-      `UPDATE layanan_cards SET ${setClauses.join(", ")} WHERE id = ?`,
-      values
-    );
-
-    const rows = await query<any>(
-      "SELECT * FROM layanan_cards WHERE id = ?",
-      [id]
-    );
+    const rows = await db.select().from(schema.layanan_cards).where(eq(schema.layanan_cards.id, id));
     const result = rows[0];
 
     logActivity(req.headers.get("x-auth-user-id"), `Mengubah layanan: ${result?.nama_layanan || id}`, req.headers.get("x-auth-user-username"));
-    return ok(result as LayananCard);
+    return ok(result);
   } catch (error) {
     return serverError(error);
   }

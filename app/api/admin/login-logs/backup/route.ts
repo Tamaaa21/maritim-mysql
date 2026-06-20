@@ -1,19 +1,25 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/mysql";
-import type { LoginLog } from "@/lib/types";
+import type { NextRequest } from "next/server";
+import { db, schema } from "@/db";
+import { asc } from "drizzle-orm";
+import { isAdmin } from "@/services/admin.service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!isAdmin(request)) {
+    return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+  }
+
   try {
-    const rows = await query("SELECT * FROM login_logs ORDER BY created_at ASC");
+    const rows = await db.select().from(schema.login_logs).orderBy(asc(schema.login_logs.created_at));
 
     const backupData = {
       version: "1.0",
       exported_at: new Date().toISOString(),
       total: rows.length,
-      records: rows as LoginLog[],
+      records: rows,
     };
 
     return new NextResponse(JSON.stringify(backupData, null, 2), {
@@ -24,6 +30,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, message: String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Gagal mengambil backup" }, { status: 500 });
   }
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { execute } from "@/lib/mysql";
-import type { BukuTamu } from "@/lib/types";
+import { db, schema } from "@/db";
 
 export const runtime = "nodejs";
 
@@ -9,7 +8,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    let records: Partial<BukuTamu>[] = [];
+    let records: any[] = [];
     if (body.records && Array.isArray(body.records)) {
       records = body.records;
     } else if (Array.isArray(body)) {
@@ -25,21 +24,18 @@ export async function POST(req: Request) {
     let inserted = 0;
     for (const r of records) {
       const id = crypto.randomUUID();
-      await execute(
-        "INSERT INTO buku_tamu (id, nama, email, no_telepon, instansi, keperluan, foto_url, foto_data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id,
-          r.nama,
-          r.email,
-          r.no_telepon,
-          r.instansi || null,
-          r.keperluan,
-          r.foto_url || null,
-          r.foto_data || null,
-          r.created_at || new Date().toISOString(),
-          new Date().toISOString(),
-        ]
-      );
+      await db.insert(schema.buku_tamu).values({
+        id: id as string,
+        nama: r.nama,
+        email: r.email,
+        no_telepon: r.no_telepon,
+        instansi: r.instansi || null,
+        keperluan: r.keperluan,
+        foto_url: r.foto_url || null,
+        foto_data: r.foto_data || null,
+        created_at: r.created_at || new Date().toISOString() as any,
+        updated_at: new Date().toISOString() as any,
+      });
       inserted++;
     }
 
@@ -48,8 +44,8 @@ export async function POST(req: Request) {
       message: `Berhasil merestore ${inserted} data buku tamu`,
       count: inserted,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Gagal restore buku tamu" }, { status: 500 });
   }
 }

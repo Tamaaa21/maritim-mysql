@@ -1,6 +1,8 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity-log";
-import { query, execute } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { eq, asc } from "drizzle-orm";
 import { okCached, serverError } from "@/lib/response";
 
 export const runtime = "nodejs";
@@ -15,7 +17,7 @@ function slugify(text: string): string {
 
 export async function GET() {
   try {
-    const data = await query("SELECT * FROM prakiraan_categories ORDER BY name ASC");
+    const data = await db.select().from(schema.prakiraan_categories).orderBy(asc(schema.prakiraan_categories.name));
     return okCached(data || []);
   } catch (error: any) {
     console.error(error);
@@ -33,24 +35,22 @@ export async function POST(req: Request) {
 
     const slug = slugify(name);
 
-    const existing = await query("SELECT id FROM prakiraan_categories WHERE name = ?", [name.trim()]);
+    const existing = await db.select({ id: schema.prakiraan_categories.id }).from(schema.prakiraan_categories).where(eq(schema.prakiraan_categories.name, name.trim()));
     if (existing.length > 0) {
       return NextResponse.json({ success: false, message: "Kategori dengan nama tersebut sudah ada" }, { status: 409 });
     }
 
     const id = crypto.randomUUID();
-    await execute(
-      "INSERT INTO prakiraan_categories (id, name, slug, description, icon) VALUES (?, ?, ?, ?, ?)",
-      [id, name.trim(), slug, description || null, icon || "Sun"]
-    );
+    await db.insert(schema.prakiraan_categories).values({
+      id,
+      name: name.trim(),
+      slug,
+      description: description || null,
+      icon: icon || "Sun",
+    });
 
-    const [data] = await query("SELECT * FROM prakiraan_categories WHERE id = ?", [id]);
+    const [data] = await db.select().from(schema.prakiraan_categories).where(eq(schema.prakiraan_categories.id, id));
 
-    logActivity(
-      req.headers.get("x-auth-user-id"),
-      `Menambah kategori prakiraan: ${name}`,
-      req.headers.get("x-auth-user-username")
-    );
     logActivity(
       req.headers.get("x-auth-user-id"),
       `Menambah kategori prakiraan: ${name}`,
@@ -58,8 +58,8 @@ export async function POST(req: Request) {
     );
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, message: error.message || String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Gagal memproses kategori" }, { status: 500 });
   }
 }

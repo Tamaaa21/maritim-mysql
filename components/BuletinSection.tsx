@@ -40,6 +40,7 @@ export default function BuletinSection() {
                 src={buletin.cover_url || buletin.url}
                 alt={buletin.title}
                 className="w-full h-auto rounded-xl border border-gray-100"
+                loading="lazy"
               />
             </div>
             {/* Decorative background blob */}

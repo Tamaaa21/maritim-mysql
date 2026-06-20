@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile, FileValidationError } from "@/lib/storage";
 import { badRequest, serverError } from "@/lib/response";
 
 export const runtime = "nodejs";
@@ -14,6 +14,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, url: result.url, path: result.path });
   } catch (error) {
-    return serverError(error);
+    if (error instanceof FileValidationError) {
+      return badRequest(error.message);
+    }
+    return serverError();
   }
 }

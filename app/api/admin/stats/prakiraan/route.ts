@@ -1,25 +1,32 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/mysql";
+import { db, schema } from "@/db";
+import { sql, lte, gte, and, or, isNull } from "drizzle-orm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const now = new Date().toISOString();
+    const now = new Date();
 
-    const [activeRows, inactiveRows] = await Promise.all([
-      query(
-        "SELECT COUNT(*) as count FROM prakiraan_images WHERE waktu_mulai <= ? AND (waktu_berakhir >= ? OR waktu_berakhir IS NULL)",
-        [now, now]
-      ),
-      query("SELECT COUNT(*) as count FROM prakiraan_images WHERE waktu_berakhir < ?", [now]),
+    const [activeResult, inactiveResult] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` })
+        .from(schema.prakiraan_images)
+        .where(
+          and(
+            lte(schema.prakiraan_images.waktu_mulai, now),
+            or(gte(schema.prakiraan_images.waktu_berakhir, now), isNull(schema.prakiraan_images.waktu_berakhir))
+          )
+        ),
+      db.select({ count: sql<number>`count(*)` })
+        .from(schema.prakiraan_images)
+        .where(lte(schema.prakiraan_images.waktu_berakhir, now)),
     ]);
 
     return NextResponse.json({
       success: true,
-      active: activeRows[0]?.count ?? 0,
-      inactive: inactiveRows[0]?.count ?? 0,
+      active: activeResult[0]?.count ?? 0,
+      inactive: inactiveResult[0]?.count ?? 0,
     });
   } catch (error: any) {
     console.error(error);
