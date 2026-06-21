@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       insertData.url = firstFile.url;
       insertData.file_path = firstFile.path;
       insertData.file_type = allFiles[0].type;
-      insertData.image_urls = JSON.stringify(imageUrls);
+      insertData.image_urls = imageUrls;
     } else if (youtube_url) {
       const ytId = getYouTubeId(youtube_url);
       if (ytId) insertData.url = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
@@ -80,8 +80,21 @@ export async function POST(req: Request) {
 
     const rows = await db.select().from(schema.kegiatan_documents).where(eq(schema.kegiatan_documents.id, id));
     const result = rows[0];
-    if (result?.image_urls && typeof result.image_urls === "string") {
-      try { result.image_urls = JSON.parse(result.image_urls); } catch {}
+    if (result?.image_urls) {
+      if (typeof result.image_urls === "string") {
+        try {
+          const parsed = JSON.parse(result.image_urls);
+          if (Array.isArray(parsed)) {
+            result.image_urls = parsed;
+          } else if (typeof parsed === "string") {
+            try { result.image_urls = JSON.parse(parsed); } catch { result.image_urls = []; }
+          } else {
+            result.image_urls = [];
+          }
+        } catch { result.image_urls = []; }
+      } else if (!Array.isArray(result.image_urls)) {
+        result.image_urls = [];
+      }
     }
 
     logActivity(req.headers.get("x-auth-user-id"), `Menambah dokumentasi kegiatan: ${title}`, req.headers.get("x-auth-user-username"));
@@ -95,8 +108,21 @@ export async function GET() {
   try {
     const rows = await db.select().from(schema.kegiatan_documents).orderBy(desc(schema.kegiatan_documents.created_at));
     const data = rows.map((r) => {
-      if (r.image_urls && typeof r.image_urls === "string") {
-        try { r.image_urls = JSON.parse(r.image_urls); } catch {}
+      if (r.image_urls) {
+        if (typeof r.image_urls === "string") {
+          try {
+            const parsed = JSON.parse(r.image_urls);
+            if (Array.isArray(parsed)) {
+              r.image_urls = parsed;
+            } else if (typeof parsed === "string") {
+              try { r.image_urls = JSON.parse(parsed); } catch { r.image_urls = []; }
+            } else {
+              r.image_urls = [];
+            }
+          } catch { r.image_urls = []; }
+        } else if (!Array.isArray(r.image_urls)) {
+          r.image_urls = [];
+        }
       }
       return r;
     });

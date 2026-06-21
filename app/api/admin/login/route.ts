@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     if (!rateCheck.allowed) {
       logActivity(null, `Rate limit terlampaui login dari IP: ${ip}`, null);
       return NextResponse.json(
-        { success: false, message: "Terlalu banyak percobaan login. Silakan coba lagi dalam 15 menit." },
+        { success: false,         message: "Terlalu banyak percobaan login. Silakan coba lagi dalam 1 menit." },
         {
           status: 429,
           headers: {

@@ -143,6 +143,17 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
     if (totalSlides > 1) goToSlide((lightboxImageIndex - 1 + totalSlides) % totalSlides);
   };
 
+  useEffect(() => {
+    if (!lightbox) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") { e.preventDefault(); setLightboxImageIndex(i => totalSlides > 1 ? (i + 1) % totalSlides : i); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); setLightboxImageIndex(i => totalSlides > 1 ? (i - 1 + totalSlides) % totalSlides : i); }
+      if (e.key === "Escape") { setLightbox(null); setShowVideo(false); }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightbox, totalSlides]);
+
   const openLightbox = (item: any) => {
     setLightbox(item);
     setLightboxImageIndex(0);
@@ -237,7 +248,7 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
 
           {/* Left: Viewer Area */}
           <div
-            className="flex-1 flex items-center justify-center p-4 md:p-8 relative overflow-hidden"
+            className={`flex-1 flex items-center justify-center p-4 md:p-8 relative overflow-hidden ${totalSlides > 1 ? 'pb-20 md:pb-24' : ''}`}
             onClick={() => { setLightbox(null); setShowVideo(false); }}
           >
             <div
@@ -295,17 +306,26 @@ export default function KegiatanSection({ limit }: { limit?: number }) {
                     </button>
                   )}
 
-                  {/* Dot Navigation */}
+                  {/* Image Counter */}
                   {totalSlides > 1 && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                      {lightbox.images.map((_: any, idx: number) => (
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                      {lightboxImageIndex + 1} / {totalSlides}
+                    </div>
+                  )}
+
+                  {/* Thumbnail Strip */}
+                  {totalSlides > 1 && (
+                    <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex gap-1.5 max-w-[90vw] overflow-x-auto pb-1">
+                      {lightbox.images.map((url: string, idx: number) => (
                         <button
                           key={idx}
                           onClick={(e) => { e.stopPropagation(); goToSlide(idx); }}
-                          className={`w-2 h-2 rounded-full transition-all ${
-                            idx === lightboxImageIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'
+                          className={`w-10 h-8 rounded border-2 shrink-0 overflow-hidden transition-all ${
+                            idx === lightboxImageIndex ? 'border-white opacity-100' : 'border-transparent opacity-50 hover:opacity-75'
                           }`}
-                        />
+                        >
+                          <img src={url} className="w-full h-full object-cover" alt="" />
+                        </button>
                       ))}
                     </div>
                   )}

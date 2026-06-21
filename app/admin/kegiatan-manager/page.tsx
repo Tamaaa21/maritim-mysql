@@ -111,7 +111,7 @@ export default function KegiatanManager() {
         <div className="mt-4 flex items-center gap-3 flex-wrap">
           <label className="inline-flex items-center gap-2 px-4 py-2 border border-dashed rounded-md cursor-pointer">
             <Upload /> <span>{files.length > 0 ? `${files.length} file dipilih` : 'Pilih file'}</span>
-            <input type="file" accept="image/*,application/pdf" multiple onChange={e => setFiles(Array.from(e.target.files || []))} className="hidden" />
+            <input type="file" accept="image/*,application/pdf" multiple onChange={e => { const selected = Array.from(e.target.files || []); if (selected.length > 0) setFiles(prev => [...prev, ...selected]); }} className="hidden" />
           </label>
           {files.length > 0 && (
             <div className="flex gap-1 flex-wrap">
@@ -172,9 +172,26 @@ export default function KegiatanManager() {
                           <Input type="date" value={editValues.event_date || ''} onChange={e => setEditValues({...editValues, event_date: e.target.value})} className="w-40 h-8 text-xs" />
                           <Input value={editValues.youtube_url || ''} onChange={e => setEditValues({...editValues, youtube_url: e.target.value})} placeholder="Link YouTube" className="flex-1 min-w-[150px] h-8 text-xs" />
                         </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(editValues.existing_urls || []).filter((url: string) => !(editValues.removed_urls || []).includes(url)).map((url: string, i: number) => (
+                            <div key={i} className="relative w-16 h-12 overflow-hidden rounded-md border border-gray-200 group">
+                              <img src={url} className="w-full h-full object-cover" />
+                              <button type="button" onClick={() => setEditValues({...editValues, removed_urls: [...(editValues.removed_urls || []), url] })} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">Hapus</button>
+                            </div>
+                          ))}
+                          {(editValues.removed_urls || []).map((url: string, i: number) => (
+                            <div key={`removed-${i}`} className="relative w-16 h-12 overflow-hidden rounded-md border-2 border-red-300 opacity-50">
+                              <img src={url} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-red-500/30 flex items-center justify-center text-white text-[8px] font-bold text-center leading-tight px-0.5">DIHAPUS</div>
+                            </div>
+                          ))}
+                          {editValues.files && editValues.files.length > 0 && (editValues.files as File[]).map((f: File, i: number) => (
+                            <div key={`new-${i}`} className="w-16 h-12 overflow-hidden rounded-md border-2 border-green-300 flex items-center justify-center bg-green-50 text-[8px] text-green-700 font-medium text-center px-0.5 leading-tight">Baru</div>
+                          ))}
+                        </div>
                         <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed text-xs rounded-md cursor-pointer text-gray-600 hover:bg-gray-50">
-                          <Upload size={14} /> <span>{editValues.files && editValues.files.length > 0 ? `${editValues.files.length} gambar baru dipilih` : 'Ganti/Tambah Gambar'}</span>
-                          <input type="file" accept="image/*,application/pdf" multiple onChange={e => setEditValues({...editValues, files: Array.from(e.target.files || [])})} className="hidden" />
+                          <Upload size={14} /> <span>{editValues.files && editValues.files.length > 0 ? `${editValues.files.length} gambar baru dipilih` : 'Tambah Gambar'}</span>
+                          <input type="file" accept="image/*,application/pdf" multiple onChange={e => setEditValues({...editValues, files: [...(editValues.files || []), ...Array.from(e.target.files || [])]})} className="hidden" />
                         </label>
                       </div>
                     ) : (
@@ -204,10 +221,12 @@ export default function KegiatanManager() {
                       <button onClick={async () => {
                         try {
                           const hasFiles = editValues.files && editValues.files.length > 0;
+                          const hasRemoved = editValues.removed_urls && editValues.removed_urls.length > 0;
                           let res;
-                          if (hasFiles) {
+                          if (hasFiles || hasRemoved) {
                             const form = new FormData();
-                            for (const f of editValues.files) form.append('files', f);
+                            if (hasFiles) for (const f of editValues.files) form.append('files', f);
+                            if (hasRemoved) form.append('removed_urls', JSON.stringify(editValues.removed_urls));
                             if (editValues.title) form.append('title', editValues.title);
                             if (editValues.description) form.append('description', editValues.description);
                             if (editValues.event_date) form.append('event_date', editValues.event_date);
@@ -237,8 +256,9 @@ export default function KegiatanManager() {
                   ) : (
                     <>
                       <button onClick={() => {
+                        const urls = Array.isArray(item.image_urls) ? item.image_urls : (item.url ? [item.url] : []);
                         setEditingId(item.id);
-                        setEditValues({ title: item.title, description: item.description, event_date: item.event_date, youtube_url: item.youtube_url || '', files: [] });
+                        setEditValues({ title: item.title, description: item.description, event_date: item.event_date, youtube_url: item.youtube_url || '', files: [], existing_urls: urls, removed_urls: [] });
                       }} className="text-xs px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 font-semibold text-white rounded-lg transition-colors border border-blue-600">Edit</button>
                       {isAdmin && (
                         <button onClick={() => handleDelete(item.id)} className="p-1.5 text-red-500 hover:bg-red-50 border border-red-100 hover:text-red-700 rounded-lg transition-colors"><Trash size={16} /></button>

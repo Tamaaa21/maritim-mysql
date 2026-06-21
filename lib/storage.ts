@@ -77,6 +77,7 @@ export async function uploadMultipleFiles(
 }
 
 export async function deleteFile(filePath: string): Promise<void> {
+  if (!filePath || filePath.trim() === "" || filePath === "uploads") return;
   const fullPath = path.join(UPLOAD_DIR, filePath);
   try {
     await fs.unlink(fullPath);

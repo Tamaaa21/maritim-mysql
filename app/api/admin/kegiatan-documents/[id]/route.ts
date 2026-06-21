@@ -28,7 +28,26 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const rows = await db.select().from(schema.kegiatan_documents).where(eq(schema.kegiatan_documents.id, id));
     const row = rows[0];
 
-    if (row?.file_path) {
+    let urls: string[] = [];
+    if (row?.image_urls) {
+      if (typeof row.image_urls === "string") {
+        try {
+          const parsed = JSON.parse(row.image_urls);
+          if (Array.isArray(parsed)) urls = parsed;
+          else if (typeof parsed === "string") try { urls = JSON.parse(parsed); } catch {}
+        } catch {}
+      } else if (Array.isArray(row.image_urls)) {
+        urls = row.image_urls;
+      }
+    }
+    urls = urls.filter(u => typeof u === "string" && u.startsWith("/uploads/"));
+
+    if (urls.length > 0) {
+      for (const url of urls) {
+        const relativePath = url.replace(/^\/uploads\//, "");
+        try { await deleteFile(relativePath); } catch (e) { console.error(`Failed to delete ${relativePath}:`, e); }
+      }
+    } else if (row?.file_path) {
       await deleteFile(row.file_path);
     }
 
@@ -45,6 +64,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   try {
     const { id } = await params;
 
+    const existing = await db.select().from(schema.kegiatan_documents).where(eq(schema.kegiatan_documents.id, id));
+    const existingRow = existing[0];
+    if (!existingRow) return badRequest("Document not found");
+
     let body: Record<string, unknown> = {};
     const contentType = req.headers.get("content-type") || "";
 
@@ -55,21 +78,59 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const event_date = form.get("event_date");
       const title = form.get("title");
       const youtube_url = form.get("youtube_url");
+      const removedUrlsRaw = form.get("removed_urls");
 
       if (title) body.title = title.toString();
       if (description) body.description = description.toString();
       if (event_date) body.event_date = event_date.toString();
       if (youtube_url !== null) body.youtube_url = youtube_url?.toString() || null;
 
+      let existingUrls: string[] = [];
+      if (existingRow.image_urls) {
+        if (Array.isArray(existingRow.image_urls)) {
+          existingUrls = existingRow.image_urls;
+        } else if (typeof existingRow.image_urls === "string") {
+          try {
+            const parsed = JSON.parse(existingRow.image_urls);
+            if (Array.isArray(parsed)) {
+              existingUrls = parsed;
+            } else if (typeof parsed === "string") {
+              try { existingUrls = JSON.parse(parsed); } catch {}
+            }
+          } catch {}
+        }
+      }
+      existingUrls = existingUrls.filter(u => typeof u === "string" && (u.startsWith("/uploads/") || u.startsWith("http")));
+      if (existingUrls.length === 0 && existingRow.url && !existingRow.youtube_url) {
+        existingUrls = [existingRow.url];
+      }
+
+      if (removedUrlsRaw) {
+        try {
+          const removed: string[] = JSON.parse(removedUrlsRaw.toString());
+          for (const url of removed) {
+            const relativePath = url.replace(/^\/uploads\//, "");
+            await deleteFile(relativePath);
+          }
+          existingUrls = existingUrls.filter(u => !removed.includes(u));
+        } catch {}
+      }
+
       if (files.length > 0) {
         const uploaded = await uploadMultipleFiles(files, "kegiatan");
-        const imageUrls = uploaded.map(u => u.url);
-        const firstFile = uploaded[0];
-        body.url = firstFile.url;
-        body.file_path = firstFile.path;
+        const newUrls = uploaded.map(u => u.url);
+        existingUrls = [...existingUrls, ...newUrls];
+
+        body.url = newUrls[0];
+        body.file_path = uploaded[0].path;
         body.file_type = files[0].type;
-        body.image_urls = JSON.stringify(imageUrls);
       }
+
+      if (!body.url && existingUrls.length > 0) {
+        body.url = existingUrls[0];
+      }
+
+      body.image_urls = existingUrls;
     } else {
       body = await req.json();
       const parsed = kegiatanDocumentSchema.safeParse(body);
@@ -90,8 +151,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const rows = await db.select().from(schema.kegiatan_documents).where(eq(schema.kegiatan_documents.id, id));
     const result = rows[0];
-    if (result?.image_urls && typeof result.image_urls === "string") {
-      try { result.image_urls = JSON.parse(result.image_urls); } catch {}
+    if (result?.image_urls) {
+      if (typeof result.image_urls === "string") {
+        try {
+          const parsed = JSON.parse(result.image_urls);
+          if (Array.isArray(parsed)) {
+            result.image_urls = parsed;
+          } else if (typeof parsed === "string") {
+            try { result.image_urls = JSON.parse(parsed); } catch { result.image_urls = []; }
+          } else {
+            result.image_urls = [];
+          }
+        } catch { result.image_urls = []; }
+      } else if (!Array.isArray(result.image_urls)) {
+        result.image_urls = [];
+      }
     }
 
     logActivity(req.headers.get("x-auth-user-id"), `Mengubah dokumentasi kegiatan: ${result?.title || id}`, req.headers.get("x-auth-user-username"));

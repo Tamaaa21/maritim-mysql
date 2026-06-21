@@ -27,10 +27,19 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
   getIcon: (name?: string) => any;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const btnRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [minBtnWidth, setMinBtnWidth] = useState(0);
+
+  useEffect(() => {
+    let max = 0;
+    for (const btn of btnRefs.current.values()) {
+      if (btn && btn.offsetWidth > max) max = btn.offsetWidth;
+    }
+    if (max > 0) setMinBtnWidth(max);
+  }, [categories]);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-
   const checkScroll = useCallback(() => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -79,25 +88,39 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
   }, [activeCategory, checkScroll]);
 
   const handleArrowClick = (dir: "left" | "right") => {
-    const currentIndex = activeCategory === null ? -1 : categories.findIndex(c => c.id === activeCategory);
-    if (dir === "right") {
-      if (currentIndex < categories.length - 1) {
-        setActiveCategory(categories[currentIndex + 1].id);
-      }
-    } else {
-      if (currentIndex === 0) {
-        setActiveCategory(null);
-      } else if (currentIndex > 0) {
-        setActiveCategory(categories[currentIndex - 1].id);
-      }
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const currentIdx = activeCategory
+      ? categories.findIndex((c) => c.id === activeCategory)
+      : -1; // "Semua"
+
+    const targetIdx = dir === "right"
+      ? Math.min(currentIdx + 1, categories.length - 1)
+      : Math.max(currentIdx - 1, -1);
+
+    if (targetIdx === currentIdx) return;
+
+    if (targetIdx === -1) {
+      // scroll to start
+      container.scrollTo({ left: 0, behavior: "smooth" });
+      setActiveCategory(null);
+      return;
     }
+
+    const targetBtn = container.querySelector(`button[data-category-id="${categories[targetIdx].id}"]`);
+    if (targetBtn) {
+      targetBtn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+
+    setActiveCategory(categories[targetIdx].id);
   };
 
   const isFirstCategory = activeCategory === null;
   const isLastCategory = activeCategory !== null && categories.length > 0 && categories[categories.length - 1].id === activeCategory;
 
   const btnClass = (isActive: boolean) =>
-    `inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 flex-shrink-0 shadow-sm border cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-98 ${isActive
+    `inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 flex-shrink-0 shadow-sm border cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-98 ${isActive
       ? "bg-[#003399] text-white border-[#003399] shadow-md hover:bg-[#002b80] hover:shadow-lg"
       : "bg-white text-gray-700 border-gray-200/80 hover:border-[#003399] hover:text-[#003399] hover:shadow-md"
     }`;
@@ -111,6 +134,8 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
         <button
           onClick={() => setActiveCategory(null)}
           className={btnClass(!activeCategory)}
+          style={minBtnWidth > 0 ? { minWidth: minBtnWidth } : undefined}
+          data-category-id="__all__"
         >
           Semua
         </button>
@@ -139,8 +164,10 @@ function CategorySlider({ categories, activeCategory, setActiveCategory, getIcon
               <button
                 key={cat.id}
                 data-category-id={cat.id}
+                ref={(el) => { if (el) btnRefs.current.set(cat.id, el); }}
                 onClick={() => setActiveCategory(cat.id)}
                 className={btnClass(activeCategory === cat.id)}
+                style={minBtnWidth > 0 ? { minWidth: minBtnWidth } : undefined}
               >
                 <Icon size={14} className="shrink-0" />
                 <span>{cat.name}</span>

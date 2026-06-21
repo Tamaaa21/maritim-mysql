@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
-import { sql, lte, gte, and, or, isNull } from "drizzle-orm";
+import { sql, and, or, isNull, eq } from "drizzle-orm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,17 +10,32 @@ export async function GET() {
     const now = new Date();
 
     const [activeResult, inactiveResult] = await Promise.all([
+      // Active: is_active = true AND (waktu_mulai IS NULL OR waktu_mulai <= now) AND (waktu_berakhir IS NULL OR waktu_berakhir >= now)
       db.select({ count: sql<number>`count(*)` })
         .from(schema.prakiraan_images)
         .where(
           and(
-            lte(schema.prakiraan_images.waktu_mulai, now),
-            or(gte(schema.prakiraan_images.waktu_berakhir, now), isNull(schema.prakiraan_images.waktu_berakhir))
+            eq(schema.prakiraan_images.is_active, true),
+            or(
+              isNull(schema.prakiraan_images.waktu_mulai),
+              sql`${schema.prakiraan_images.waktu_mulai} <= ${now}`
+            ),
+            or(
+              isNull(schema.prakiraan_images.waktu_berakhir),
+              sql`${schema.prakiraan_images.waktu_berakhir} >= ${now}`
+            )
           )
         ),
+      // Inactive: is_active = false OR waktu_berakhir < now OR (waktu_mulai > now AND waktu_mulai IS NOT NULL)
       db.select({ count: sql<number>`count(*)` })
         .from(schema.prakiraan_images)
-        .where(lte(schema.prakiraan_images.waktu_berakhir, now)),
+        .where(
+          or(
+            eq(schema.prakiraan_images.is_active, false),
+            sql`${schema.prakiraan_images.waktu_berakhir} IS NOT NULL AND ${schema.prakiraan_images.waktu_berakhir} < ${now}`,
+            sql`${schema.prakiraan_images.waktu_mulai} IS NOT NULL AND ${schema.prakiraan_images.waktu_mulai} > ${now}`
+          )
+        ),
     ]);
 
     return NextResponse.json({
