@@ -1,5 +1,6 @@
 "use client";
 
+import PrakiraanSection from "@/components/PrakiraanSection";
 import dynamic from "next/dynamic";
 
 const BuletinSection = dynamic(() => import("@/components/BuletinSection"), { ssr: false });
@@ -13,6 +14,7 @@ export default function DynamicContent() {
   return (
     <>
       <BuletinSection />
+      <PrakiraanSection limit={4} />
       <InformasiLainnyaSection />
       <EarthquakeCard />
       <LayananSection limit={4} />

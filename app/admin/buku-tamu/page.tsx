@@ -8,6 +8,7 @@ import autoTable from "jspdf-autotable";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { useAdminUser } from '@/hooks/useAdminUser';
 import AdminPagination from '@/components/AdminPagination';
+import { csrfFetch } from '@/lib/csrf';
 
 interface BukuTamuEntry {
   id: string;
@@ -39,7 +40,7 @@ export default function BukuTamuPage() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("/api/admin/buku-tamu");
+      const response = await csrfFetch("/api/admin/buku-tamu");
       const result = await response.json();
       const items = Array.isArray(result) ? result : (result?.data || []);
       setData(items);
@@ -76,7 +77,7 @@ export default function BukuTamuPage() {
 
     try {
       const payload = JSON.stringify({ ids: Array.from(selectedLogs) });
-      const res = await fetch("/api/admin/buku-tamu", {
+      const res = await csrfFetch("/api/admin/buku-tamu", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: payload
@@ -118,7 +119,7 @@ export default function BukuTamuPage() {
     const confirm = await showConfirm('Hapus Data?', 'Data ini akan dihapus permanen.');
     if (!confirm.isConfirmed) return;
     try {
-      const res = await fetch(`/api/admin/buku-tamu`, {
+      const res = await csrfFetch(`/api/admin/buku-tamu`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [id] })
@@ -231,7 +232,7 @@ export default function BukuTamuPage() {
 
   const handleBackup = async () => {
     try {
-      const res = await fetch("/api/admin/buku-tamu/backup");
+      const res = await csrfFetch("/api/admin/buku-tamu/backup");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -255,7 +256,7 @@ export default function BukuTamuPage() {
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      const res = await fetch("/api/admin/buku-tamu/restore", {
+      const res = await csrfFetch("/api/admin/buku-tamu/restore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

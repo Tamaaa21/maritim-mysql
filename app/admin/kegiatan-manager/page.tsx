@@ -8,6 +8,7 @@ import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { CardGridSkeleton } from '@/components/LoadingSkeleton';
 import { useAdminUser } from '@/hooks/useAdminUser';
 import AdminPagination from '@/components/AdminPagination';
+import { csrfFetch } from '@/lib/csrf';
 
 export default function KegiatanManager() {
   const { isAdmin } = useAdminUser();
@@ -29,7 +30,7 @@ export default function KegiatanManager() {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/kegiatan-documents');
+      const res = await csrfFetch('/api/admin/kegiatan-documents');
       const json = await res.json();
       if (json?.success) setItems(json.data || []);
     } catch (e) { console.error(e); }
@@ -52,7 +53,7 @@ export default function KegiatanManager() {
       if (description) form.append('description', description);
       if (eventDate) form.append('event_date', eventDate);
       if (youtubeUrl) form.append('youtube_url', youtubeUrl);
-      const res = await fetch('/api/admin/kegiatan-documents', { method: 'POST', body: form });
+      const res = await csrfFetch('/api/admin/kegiatan-documents', { method: 'POST', body: form });
       const json = await res.json();
       if (json?.success) {
         showSuccess('Berhasil Upload', 'Dokumen berhasil diupload.');
@@ -69,7 +70,7 @@ export default function KegiatanManager() {
     const confirm = await showConfirm('Hapus Dokumen?', 'Dokumen ini akan dihapus permanen.');
     if (!confirm.isConfirmed) return;
     try {
-      const res = await fetch(`/api/admin/kegiatan-documents/${id}`, { method: 'DELETE' });
+      const res = await csrfFetch(`/api/admin/kegiatan-documents/${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json?.success) {
         showSuccess('Berhasil Dihapus', 'Dokumen telah dihapus.');
@@ -211,7 +212,7 @@ export default function KegiatanManager() {
                             if (editValues.description) form.append('description', editValues.description);
                             if (editValues.event_date) form.append('event_date', editValues.event_date);
                             if (editValues.youtube_url) form.append('youtube_url', editValues.youtube_url);
-                            res = await fetch(`/api/admin/kegiatan-documents/${item.id}`, { method: 'PATCH', body: form });
+                            res = await csrfFetch(`/api/admin/kegiatan-documents/${item.id}`, { method: 'PATCH', body: form });
                           } else {
                             const body = {
                               title: editValues.title,
@@ -219,7 +220,7 @@ export default function KegiatanManager() {
                               event_date: editValues.event_date,
                               youtube_url: editValues.youtube_url || null,
                             };
-                            res = await fetch(`/api/admin/kegiatan-documents/${item.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                            res = await csrfFetch(`/api/admin/kegiatan-documents/${item.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                           }
                           const json = await res.json();
                           if (json?.success) {

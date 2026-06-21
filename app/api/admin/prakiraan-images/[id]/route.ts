@@ -38,9 +38,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     if (!raw) return notFound();
 
-    const data: any = { ...raw.prakiraan_images };
+    const data = { ...raw.prakiraan_images } as Record<string, unknown>;
     if (data.gallery_images && typeof data.gallery_images === "string") {
-      try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
+      try { data.gallery_images = JSON.parse(data.gallery_images as string); } catch { /* ignore */ }
     }
 
     const cat = raw.prakiraan_categories;
@@ -49,7 +49,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       name: cat.name,
       slug: cat.slug,
       description: cat.description,
-      icon: cat.icon,
+      icon: cat.icon ?? "",
     } : null;
 
     return ok(data);
@@ -104,6 +104,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       cleanData.gallery_images = JSON.stringify(cleanData.gallery_images);
     }
 
+    // Convert ISO string dates to Date objects for Drizzle
+    for (const key of ["waktu_mulai", "waktu_berakhir", "next_waktu_mulai", "next_waktu_berakhir"]) {
+      if (cleanData[key] && typeof cleanData[key] === "string") {
+        cleanData[key] = new Date(cleanData[key] as string);
+      }
+    }
+
     await db.update(schema.prakiraan_images).set(cleanData).where(eq(schema.prakiraan_images.id, id));
 
     const rows = await db.select()
@@ -114,9 +121,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (!raw) return notFound();
 
-    const data: any = { ...raw.prakiraan_images };
+    const data = { ...raw.prakiraan_images } as Record<string, unknown>;
     if (data.gallery_images && typeof data.gallery_images === "string") {
-      try { data.gallery_images = JSON.parse(data.gallery_images); } catch { /* ignore */ }
+      try { data.gallery_images = JSON.parse(data.gallery_images as string); } catch { /* ignore */ }
     }
 
     const cat = raw.prakiraan_categories;
@@ -125,12 +132,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       name: cat.name,
       slug: cat.slug,
       description: cat.description,
-      icon: cat.icon,
+      icon: cat.icon ?? "",
     } : null;
 
     logActivity(
       req.headers.get("x-auth-user-id"),
-      `Mengubah prakiraan: ${data?.title || id}`,
+      `Mengubah prakiraan: ${(data?.title as string) || id}`,
       req.headers.get("x-auth-user-username")
     );
     return ok(data);

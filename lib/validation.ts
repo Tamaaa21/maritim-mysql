@@ -27,19 +27,21 @@ export const updateUserSchema = z.object({
 
 export const prakiraanSchema = z.object({
   title: z.string().min(1, "Judul harus diisi"),
-  slug: z.string().optional(),
-  explanation: z.string().optional(),
-  waktu_mulai: z.string().optional(),
-  waktu_berakhir: z.string().optional(),
-  category_id: z.string().uuid().optional(),
-  display_type: z.enum(["gambar_saja", "gambar_teks", "gambar_galeri"]).optional(),
-  url: z.string().optional(),
-  next_url: z.string().optional(),
-  next_explanation: z.string().optional(),
-  next_waktu_mulai: z.string().optional(),
-  next_waktu_berakhir: z.string().optional(),
-  gallery_images: z.array(z.string()).optional(),
-  prioritas: z.number().int().optional(),
+  slug: z.string().nullable().optional(),
+  explanation: z.string().nullable().optional(),
+  waktu_mulai: z.string().nullable().optional(),
+  waktu_berakhir: z.string().nullable().optional(),
+  category_id: z.string().nullable().optional(),
+  display_type: z.enum(["gambar_saja", "gambar_teks", "gambar_galeri"]).nullable().optional(),
+  url: z.string().nullable().optional(),
+  next_url: z.string().nullable().optional(),
+  next_explanation: z.string().nullable().optional(),
+  next_waktu_mulai: z.string().nullable().optional(),
+  next_waktu_berakhir: z.string().nullable().optional(),
+  gallery_images: z.array(z.string()).nullable().optional(),
+  prioritas: z.number().int().nullable().optional(),
+  is_active: z.boolean().nullable().optional(),
+  uploader: z.string().nullable().optional(),
 });
 
 export const bukuTamuSchema = z.object({
@@ -52,9 +54,9 @@ export const bukuTamuSchema = z.object({
 
 export const layananCardSchema = z.object({
   nama_layanan: z.string().min(1, "Nama layanan harus diisi"),
-  deskripsi: z.string().optional(),
-  url_google_form: z.string().optional(),
-  cover_url: z.string().optional(),
+  deskripsi: z.string().nullable().optional(),
+  url_google_form: z.string().nullable().optional(),
+  cover_url: z.string().nullable().optional(),
 });
 
 export const strukturOrganisasiSchema = z.object({
@@ -94,7 +96,7 @@ export const kegiatanDocumentSchema = z.object({
   title: z.string().min(1, "Judul harus diisi").optional(),
   description: z.string().optional(),
   event_date: z.string().optional(),
-  youtube_url: z.string().optional(),
+  youtube_url: z.string().nullable().optional(),
 });
 
 export const bukuTamuSubmitSchema = z.object({

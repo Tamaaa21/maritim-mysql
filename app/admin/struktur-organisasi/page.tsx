@@ -7,6 +7,7 @@ import Link from "next/link";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { TableSkeleton } from '@/components/LoadingSkeleton';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import { csrfFetch } from '@/lib/csrf';
 
 interface StrukturItem {
   id: string;
@@ -43,7 +44,7 @@ export default function StrukturManagerPage() {
   const fetchList = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/struktur-organisasi");
+      const res = await csrfFetch("/api/admin/struktur-organisasi");
       const data = await res.json();
       if (data?.success && Array.isArray(data.data)) {
         setItems(data.data);
@@ -88,7 +89,7 @@ export default function StrukturManagerPage() {
       const formData = new FormData();
       formData.append("file", file);
       
-      const res = await fetch("/api/admin/upload", {
+      const res = await csrfFetch("/api/admin/upload", {
         method: "POST",
         body: formData,
       });
@@ -132,7 +133,7 @@ export default function StrukturManagerPage() {
       
       const method = isEdit ? "PUT" : "POST";
 
-      const res = await fetch(endpoint, {
+      const res = await csrfFetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -146,7 +147,7 @@ export default function StrukturManagerPage() {
       } else {
         setError(resData.message || "Gagal menyimpan data");
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       setError("Terjadi kesalahan koneksi server");
     } finally {
@@ -159,7 +160,7 @@ export default function StrukturManagerPage() {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await fetch(`/api/admin/struktur-organisasi/${id}`, {
+      const res = await csrfFetch(`/api/admin/struktur-organisasi/${id}`, {
         method: "DELETE",
       });
       const data = await res.json();

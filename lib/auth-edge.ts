@@ -2,6 +2,7 @@
 // Used by middleware.ts
 
 export const COOKIE_NAME = "admin_token";
+export const CSRF_COOKIE_NAME = "csrf_token";
 export const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 
 function getSecret(): string {
@@ -19,6 +20,18 @@ async function sha256Hex(data: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const encoder = new TextEncoder();
+  const bufA = encoder.encode(a);
+  const bufB = encoder.encode(b);
+  let result = 0;
+  for (let i = 0; i < bufA.length; i++) {
+    result |= bufA[i] ^ bufB[i];
+  }
+  return result === 0;
+}
+
 export async function verifySessionToken(token: string): Promise<{
   valid: boolean; userId?: string; role?: string; username?: string
 }> {
@@ -30,7 +43,7 @@ export async function verifySessionToken(token: string): Promise<{
     const payload = parts.join(":");
     const expectedSig = await sha256Hex(payload + secret);
 
-    if (signature !== expectedSig) return { valid: false };
+    if (!timingSafeEqual(signature, expectedSig)) return { valid: false };
 
     const [userId, role, username, , timestamp] = parts;
     if (Date.now() - parseInt(timestamp) > SESSION_DURATION_MS) return { valid: false };

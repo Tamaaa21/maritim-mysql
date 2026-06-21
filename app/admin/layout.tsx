@@ -26,6 +26,7 @@ import { AdminRealtimeProvider, useAdminRealtime } from "@/components/AdminRealt
 import { Toaster } from "@/components/ui/sonner";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { AdminUserContext } from "@/hooks/useAdminUser";
+import { csrfFetch } from "@/lib/csrf";
 
 interface UserInfo {
   username: string;
@@ -158,7 +159,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/admin/logout", { method: "POST" });
+      await csrfFetch("/api/admin/logout", { method: "POST" });
     } catch {}
     setIsLoggedIn(false);
     setLoading(false);

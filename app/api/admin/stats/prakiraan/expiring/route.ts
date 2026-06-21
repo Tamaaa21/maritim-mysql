@@ -28,7 +28,7 @@ export async function GET() {
       .orderBy(asc(schema.prakiraan_images.waktu_berakhir));
 
     return NextResponse.json({ success: true, data: rows ?? [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching expiring prakiraan:", error);
     return NextResponse.json({ success: false, data: [] }, { status: 500 });
   }

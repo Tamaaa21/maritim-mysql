@@ -35,7 +35,7 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      let data: any = null;
+      let data: Record<string, unknown> | null = null;
       try {
         data = await response.json();
       } catch (parseErr) {
@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
       }
 
       if (!response.ok) {
-        setError(data?.message || "Login gagal");
+        setError((data?.message as string) || "Login gagal");
         captchaRef.current?.refresh();
         return;
       }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { isVideoUrl } from "@/lib/utils";
+import { getYoutubeVideoId, isYoutubeUrl } from "@/lib/youtube";
 
 const defaultImages: string[] = [];
 
@@ -63,7 +64,15 @@ export default function HeroBackgroundSlideshow({ onImageChange }: { onImageChan
           suppressHydrationWarning
           className="absolute inset-0 w-full h-full"
         >
-          {isVideoUrl(images[current]) ? (
+          {isYoutubeUrl(images[current]) ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${getYoutubeVideoId(images[current])}?autoplay=1&mute=1&controls=0&loop=1&playlist=${getYoutubeVideoId(images[current])}&rel=0&showinfo=0`}
+              className="w-full h-full object-cover pointer-events-none"
+              allow="autoplay; encrypted-media"
+              frameBorder="0"
+              allowFullScreen
+            />
+          ) : isVideoUrl(images[current]) ? (
             <video
               src={images[current]}
               className="w-full h-full object-cover"

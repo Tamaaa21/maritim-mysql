@@ -2,35 +2,59 @@
 
 Portal informasi cuaca maritim dan layanan publik berbasis Next.js untuk Stasiun Meteorologi Maritim Tegal – BMKG.
 
-Dokumentasi lengkap: [ringkasan.md](./ringkasan.md)
-
 ## Teknologi Utama
 
-- **Framework:** Next.js (React + TypeScript)
+- **Framework:** Next.js 16 (React 19 + TypeScript)
 - **Styling:** Tailwind CSS + shadcn/ui
-- **Backend / Auth / DB:** Supabase (Postgres + RLS)
+- **Database:** MySQL + Drizzle ORM
+- **Auth:** Custom JWT (HMAC-SHA256) + bcrypt
 - **Animasi:** Framer Motion
 - **Form:** React Hook Form + Zod
+- **Testing:** Vitest (236 tests)
+- **CI/CD:** GitHub Actions
 
-## Fitur Singkat
+## Fitur
 
-- Halaman publik (Home, About, Prakiraan, Layanan, Kegiatan, Buku Tamu, Kontak)
-- Informasi cuaca real-time dari BMKG dan OpenWeatherMap
-- Informasi gempa terkini dari BMKG TEWS
-- Form layanan publik (berbayar / nol rupiah)
-- Panel admin CMS (dashboard, prakiraan, publikasi, kegiatan, hero slider, users, dll)
-- Display digital otomatis (slideshow untuk monitor informasi publik)
+### Halaman Publik
+- Beranda (hero slider, prakiraan cuaca, informasi BMKG)
+- About (visi-misi, struktur organisasi)
+- Prakiraan cuaca maritim
+- Layanan publik
+- Dokumentasi kegiatan
+- Buku tamu online
+- Kontak
+
+### Panel Admin (CMS)
+- Dashboard statistik
+- Manajemen prakiraan cuaca
+- Manajemen publikasi / buletin
+- Manajemen dokumentasi kegiatan
+- Slider hero home
+- Struktur organisasi
+- Data buku tamu (CRUD + backup/restore)
+- Kelola layanan
+- Display digital otomatis
+- Manajemen user
+- History login
+- Pengaturan (ganti password)
+
+### Keamanan
+- **CSRF Protection** — double-submit cookie pattern
+- **Rate Limiting** — login (5/menit), create user (10/menit), buku tamu (5/menit)
+- **Timing-safe** token comparison
+- **RBAC** — role-based access control (super_admin, admin, karyawan)
+- **Audit logging** — 39 log points untuk operasi sensitif
+- **Security headers** — CSP, HSTS, X-Frame-Options, X-XSS-Protection
 
 ## Cara Install & Jalankan
 
 ### Prasyarat
 
-Pastikan sudah terinstall:
-
 | Software | Minimal Versi |
 |----------|--------------|
 | Node.js | 20.x LTS |
-| npm | 9+ (bundle dengan Node.js) |
+| npm | 9+ |
+| MySQL | 8.0+ |
 
 ### Langkah-langkah
 
@@ -39,93 +63,101 @@ Pastikan sudah terinstall:
 git clone <url-repository>
 cd BMKG-Maritim-Tegal
 
-# 2. Install semua dependency
+# 2. Install dependency
 npm install
-```
 
-### 3. Konfigurasi Environment
+# 3. Konfigurasi environment
+cp .env.example .env
+# Edit .env sesuai konfigurasi server
 
-Buat file `.env.local` di root project:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
-
-### 4. Database Migration
-
-Jalankan semua file SQL di `supabase/migrations/` secara berurutan sesuai timestamp di Supabase SQL Editor atau via psql.
-
-### 5. Jalankan Development
-
-```bash
+# 4. Jalankan development
 npm run dev
 ```
 
-### 6. Build & Production
+### Build & Production
 
 ```bash
 npm run build
 npm run start
 ```
 
-### 7. Lint & Type Check
+### Testing
 
 ```bash
-npm run lint       # ESLint
-npm run typecheck  # TypeScript check
+npm run test           # Run semua tests (236 tests)
+npm run test:watch     # Watch mode
+npm run test:coverage  # Coverage report
+npm run typecheck      # TypeScript check
 ```
-
-## Struktur Database
-
-12 tabel utama: `users`, `buku_tamu`, `layanan_berbayar`, `layanan_nol_rupiah`, `layanan_cards`, `hero_images`, `prakiraan_images`, `prakiraan_categories`, `kegiatan_documents`, `login_logs`, `struktur_organisasi`, `admin_users`.
-
-Lihat [ringkasan.md](./ringkasan.md#5-database) untuk detail skema dan ERD.
 
 ## Environment Variables
 
 | Variabel | Wajib | Fungsi |
 |----------|-------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Ya | URL project Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Ya | Public anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Ya | Service role key (bypass RLS) |
-| `SUPABASE_STORAGE_BUCKET` | Tidak | Nama bucket storage |
-| `TOKEN_SECRET` | Tidak | Secret HMAC token |
-| `BMKG_CACHE_TTL` | Tidak | Cache TTL BMKG API |
+| `MYSQL_HOST` | Ya | Host MySQL |
+| `MYSQL_PORT` | Ya | Port MySQL |
+| `MYSQL_USER` | Ya | Username MySQL |
+| `MYSQL_PASSWORD` | Ya | Password MySQL |
+| `MYSQL_DATABASE` | Ya | Nama database |
+| `TOKEN_SECRET` | Ya | Secret untuk JWT (random hex 32 bytes) |
+| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Tidak | reCAPTCHA site key |
+| `RECAPTCHA_SECRET_KEY` | Tidak | reCAPTCHA secret key |
+| `BMKG_API_URL` | Tidak | URL API BMKG |
+| `BMKG_CACHE_TTL` | Tidak | Cache TTL (ms) |
 | `OPENWEATHER_API_KEY` | Tidak | API key OpenWeatherMap |
+| `NEXT_PUBLIC_WHATSAPP_PHONE` | Tidak | Nomor WhatsApp |
 
-## Deployment
+## Database
 
-Project siap di-deploy ke **Netlify** (lihat `netlify.toml`).
+10 tabel: `users`, `buku_tamu`, `hero_images`, `prakiraan_images`, `prakiraan_categories`, `kegiatan_documents`, `layanan_cards`, `struktur_organisasi`, `display_slides`, `publications`, `login_logs`.
 
-```bash
-npx next build
-```
+Migration: `npx drizzle-kit push`
 
 ## Role Pengguna
 
 | Role | Akses |
 |------|-------|
-| `super_admin` | Full akses (termasuk manajemen users) |
+| `super_admin` | Full akses (manajemen users, semua CRUD) |
 | `admin` | Semua fitur kecuali manajemen users |
 | `karyawan` | Terbatas (dashboard, history login, ganti password) |
 
-## Dokumentasi Lengkap
+## Struktur Project
 
-Baca [ringkasan.md](./ringkasan.md) untuk dokumentasi project yang mencakup:
+```
+app/
+├── api/                    # API routes
+│   ├── admin/              # Admin endpoints (protected)
+│   ├── submit/             # Public endpoints
+│   ├── weather/            # Weather proxy
+│   └── bmkg/               # BMKG API proxy
+├── admin/                  # Admin pages
+├── about/                  # About pages
+├── prakiraan/              # Prakiraan pages
+├── layanan/                # Layanan page
+├── kegiatan/               # Kegiatan page
+├── kontak/                 # Kontak page
+└── buku_tamu/              # Buku tamu page
+components/                 # Reusable components
+db/                         # Database schema + connection
+hooks/                      # Custom React hooks
+lib/                        # Utilities (auth, validation, storage)
+services/                   # Business logic layer
+types/                      # TypeScript types
+scripts/                    # Seed + test scripts
+```
 
-1. Informasi Umum Project
-2. Teknologi yang Digunakan
-3. Struktur Project
-4. Arsitektur Sistem
-5. Database (skema, relasi, ERD)
-6. Role dan Hak Akses
-7. Fitur Utama
-8. API dan Integrasi
-9. Environment Variables
-10. Dependency Penting
-11. Keamanan (auth, RLS, middleware, proteksi route)
-12. Deployment
+## Deployment (VPS BMKG)
 
+Project di-deploy ke VPS BMKG sendiri.
 
+```bash
+# Build
+npm run build
+
+# Jalankan dengan PM2
+pm2 start npm --name "bmkg-tegal" -- start
+```
+
+## License
+
+Internal — Stasiun Meteorologi Maritim Tegal, BMKG.

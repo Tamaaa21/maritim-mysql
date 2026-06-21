@@ -5,6 +5,10 @@ import { uploadFile } from "@/lib/storage";
 import { logActivity } from "@/lib/activity-log";
 import { ok, badRequest, notFound, serverError } from "@/lib/response";
 import { displaySchema } from "@/lib/validation";
+import type { DisplaySlide } from "@/lib/types";
+
+// DB returns Date objects, DisplaySlide uses strings
+type DBDisplaySlide = Omit<DisplaySlide, "created_at"> & { created_at: Date | null };
 
 
 export const runtime = "nodejs";
@@ -100,15 +104,15 @@ export async function PATCH(req: Request) {
     }
 
     if (body.items && Array.isArray(body.items)) {
-      const allItems = await db.select().from(schema.display_slides);
+      const allItems: DBDisplaySlide[] = await db.select().from(schema.display_slides);
 
-      const newOrderedList: any[] = [];
+      const newOrderedList: DBDisplaySlide[] = [];
       body.items.forEach((id: string) => {
-        const found = allItems.find((it: any) => it.id === id);
+        const found = allItems.find((it) => it.id === id);
         if (found) newOrderedList.push(found);
       });
-      allItems.forEach((it: any) => {
-        if (!newOrderedList.some((n: any) => n.id === it.id)) {
+      allItems.forEach((it) => {
+        if (!newOrderedList.some((n) => n.id === it.id)) {
           newOrderedList.push(it);
         }
       });
@@ -132,9 +136,9 @@ export async function PATCH(req: Request) {
       return badRequest("direction must be up or down");
     }
 
-    const items = await db.select().from(schema.display_slides).orderBy(asc(schema.display_slides.order));
+    const items: DBDisplaySlide[] = await db.select().from(schema.display_slides).orderBy(asc(schema.display_slides.order));
 
-    const idx = items.findIndex((i: any) => i.id === id);
+    const idx = items.findIndex((i) => i.id === id);
     if (idx === -1) return notFound();
 
     if (direction === "up" && idx > 0) {

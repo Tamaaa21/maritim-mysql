@@ -20,7 +20,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ success: false, message: parsed.error.errors.map(e => e.message).join(", ") }, { status: 400 });
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (parsed.data.name) {
       updateData.name = parsed.data.name;
       updateData.slug = parsed.data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

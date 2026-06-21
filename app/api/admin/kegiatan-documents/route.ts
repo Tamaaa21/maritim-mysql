@@ -94,7 +94,7 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const rows = await db.select().from(schema.kegiatan_documents).orderBy(desc(schema.kegiatan_documents.created_at));
-    const data = rows.map((r: any) => {
+    const data = rows.map((r) => {
       if (r.image_urls && typeof r.image_urls === "string") {
         try { r.image_urls = JSON.parse(r.image_urls); } catch {}
       }

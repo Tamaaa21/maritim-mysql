@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 const OPENWEATHER_URL = 'https://api.openweathermap.org/data/2.5/weather'
 
 // Simple in-memory cache for BMKG responses
-let BMKG_CACHE: { data: any | null; expires: number } = { data: null, expires: 0 };
+let BMKG_CACHE: { data: Record<string, unknown> | null; expires: number } = { data: null, expires: 0 };
 const BMKG_CACHE_TTL = process.env.BMKG_CACHE_TTL ? parseInt(process.env.BMKG_CACHE_TTL) : 1000 * 60 * 10;
 
 function degToCompass(num: number) {

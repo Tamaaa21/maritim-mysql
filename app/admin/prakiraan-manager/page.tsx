@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { useAdminUser } from '@/hooks/useAdminUser';
 import AdminPagination from '@/components/AdminPagination';
+import { csrfFetch } from '@/lib/csrf';
 import "react-quill-new/dist/quill.snow.css";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -118,7 +119,7 @@ export default function PrakiraanManager() {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch("/api/admin/prakiraan-images");
+      const res = await csrfFetch("/api/admin/prakiraan-images");
       const b = await res.json();
       if (b?.success) setItems(b.data || []);
     } catch (err) { console.error(err); }
@@ -127,7 +128,7 @@ export default function PrakiraanManager() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("/api/admin/prakiraan-categories");
+      const res = await csrfFetch("/api/admin/prakiraan-categories");
       const b = await res.json();
       if (b?.success) setCategories(b.data || []);
     } catch { }
@@ -143,7 +144,7 @@ export default function PrakiraanManager() {
     if (!catForm.name.trim()) { showError('Validasi Gagal', "Nama kategori harus diisi"); return; }
     try {
       if (catForm.id) {
-        const res = await fetch(`/api/admin/prakiraan-categories/${catForm.id}`, {
+        const res = await csrfFetch(`/api/admin/prakiraan-categories/${catForm.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: catForm.name, description: catForm.description, icon: catForm.icon }),
@@ -154,7 +155,7 @@ export default function PrakiraanManager() {
           showSuccess('Berhasil', 'Kategori berhasil diperbarui');
         } else { showError('Gagal', json?.message || "Gagal"); }
       } else {
-        const res = await fetch("/api/admin/prakiraan-categories", {
+        const res = await csrfFetch("/api/admin/prakiraan-categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: catForm.name, description: catForm.description, icon: catForm.icon }),
@@ -172,7 +173,7 @@ export default function PrakiraanManager() {
     const confirm = await showConfirm('Hapus Kategori?', "Kartu prakiraan dengan kategori ini akan menjadi tidak berkategori.");
     if (!confirm.isConfirmed) return;
     try {
-      const res = await fetch(`/api/admin/prakiraan-categories/${id}`, { method: "DELETE" });
+      const res = await csrfFetch(`/api/admin/prakiraan-categories/${id}`, { method: "DELETE" });
       const json = await res.json();
       if (json?.success) {
         showSuccess('Berhasil Dihapus', 'Kategori telah dihapus.');
@@ -205,7 +206,7 @@ export default function PrakiraanManager() {
         next_waktu_mulai: item.next_waktu_mulai ? formatToDateOnly(item.next_waktu_mulai) : "",
         next_waktu_berakhir: item.next_waktu_berakhir ? formatToDateOnly(item.next_waktu_berakhir) : "",
         display_type: item.display_type || "gambar_saja",
-        gallery_images: item.gallery_images || [],
+        gallery_images: Array.isArray(item.gallery_images) ? item.gallery_images : typeof item.gallery_images === 'string' ? (() => { try { return JSON.parse(item.gallery_images as string); } catch { return []; } })() : [],
       });
     }
     setIsModalOpen(true);
@@ -219,7 +220,7 @@ export default function PrakiraanManager() {
     const confirm = await showConfirm('Hapus Prakiraan?', "Apakah Anda yakin ingin menghapus kartu prakiraan ini?");
     if (!confirm.isConfirmed) return;
     try {
-      const res = await fetch(`/api/admin/prakiraan-images/${id}`, { method: "DELETE" });
+      const res = await csrfFetch(`/api/admin/prakiraan-images/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data?.success) {
         setItems((prev) => prev.filter((item) => item.id !== id));
@@ -256,17 +257,17 @@ export default function PrakiraanManager() {
         if (editingEntry.next_waktu_mulai) form.append("next_waktu_mulai", dateToStartOfDayISO(editingEntry.next_waktu_mulai) || "");
         if (editingEntry.next_waktu_berakhir) form.append("next_waktu_berakhir", dateToEndOfDayISO(editingEntry.next_waktu_berakhir) || "");
 
-        const existingGallery = (editingEntry.gallery_images || []).filter(img => !img.startsWith("blob:"));
+        const existingGallery = (Array.isArray(editingEntry.gallery_images) ? editingEntry.gallery_images : []).filter(img => !img.startsWith("blob:"));
         if (editingEntry.galleryFiles && editingEntry.galleryFiles.length > 0) {
           const galleryUrls: string[] = [];
           for (const gf of editingEntry.galleryFiles) {
             const gfForm = new FormData();
             gfForm.append("file", gf);
             gfForm.append("title", editingEntry.title + " (gallery)");
-            const upRes = await fetch("/api/admin/prakiraan-images", { method: "POST", body: gfForm });
+            const upRes = await csrfFetch("/api/admin/prakiraan-images", { method: "POST", body: gfForm });
             const upJson = await upRes.json();
             if (upJson?.success && upJson.data?.url) {
-              await fetch(`/api/admin/prakiraan-images/${upJson.data.id}`, { method: "DELETE" });
+              await csrfFetch(`/api/admin/prakiraan-images/${upJson.data.id}`, { method: "DELETE" });
               galleryUrls.push(upJson.data.url);
             }
           }
@@ -275,7 +276,7 @@ export default function PrakiraanManager() {
           form.append("gallery_images", JSON.stringify(existingGallery));
         }
 
-        const res = await fetch("/api/admin/prakiraan-images", { method: "POST", body: form });
+        const res = await csrfFetch("/api/admin/prakiraan-images", { method: "POST", body: form });
         const body = await res.json();
         if (body?.success) {
           showSuccess('Berhasil', "Berhasil menambahkan kartu prakiraan baru");
@@ -291,10 +292,10 @@ export default function PrakiraanManager() {
           const form = new FormData();
           form.append("file", file);
           form.append("title", editingEntry.title + " (temp)");
-          const uploadRes = await fetch("/api/admin/prakiraan-images", { method: "POST", body: form });
+          const uploadRes = await csrfFetch("/api/admin/prakiraan-images", { method: "POST", body: form });
           const uploadBody = await uploadRes.json();
           if (uploadBody?.success && uploadBody.data?.url) {
-            await fetch(`/api/admin/prakiraan-images/${uploadBody.data.id}`, { method: "DELETE" });
+            await csrfFetch(`/api/admin/prakiraan-images/${uploadBody.data.id}`, { method: "DELETE" });
             return uploadBody.data.url;
           }
           throw new Error("Gagal mengunggah gambar");
@@ -303,7 +304,7 @@ export default function PrakiraanManager() {
         if (editingEntry.file) finalUrl = await uploadTempImage(editingEntry.file);
         if (editingEntry.nextFile) finalNextUrl = await uploadTempImage(editingEntry.nextFile);
 
-        let finalGallery = (editingEntry.gallery_images || []).filter(img => !img.startsWith("blob:"));
+        let finalGallery = (Array.isArray(editingEntry.gallery_images) ? editingEntry.gallery_images : []).filter(img => !img.startsWith("blob:"));
         if (editingEntry.galleryFiles && editingEntry.galleryFiles.length > 0) {
           for (const gf of editingEntry.galleryFiles) {
             const url = await uploadTempImage(gf);
@@ -311,7 +312,7 @@ export default function PrakiraanManager() {
           }
         }
 
-        const patchPayload: any = {
+        const patchPayload: Record<string, unknown> = {
           title: editingEntry.title,
           slug: finalSlug,
           url: finalUrl,
@@ -328,7 +329,7 @@ export default function PrakiraanManager() {
         patchPayload.next_waktu_mulai = editingEntry.next_waktu_mulai ? dateToStartOfDayISO(editingEntry.next_waktu_mulai) : null;
         patchPayload.next_waktu_berakhir = editingEntry.next_waktu_berakhir ? dateToEndOfDayISO(editingEntry.next_waktu_berakhir) : null;
 
-        const res = await fetch(`/api/admin/prakiraan-images/${editingEntry.id}`, {
+        const res = await csrfFetch(`/api/admin/prakiraan-images/${editingEntry.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(patchPayload),
@@ -341,9 +342,10 @@ export default function PrakiraanManager() {
           showError('Gagal Memperbarui', body?.message || "Error");
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      showError('Error', err.message || "Terjadi kesalahan saat menyimpan data");
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan data";
+      showError('Error', message);
     } finally { setSaving(false); }
   };
 
@@ -674,12 +676,12 @@ export default function PrakiraanManager() {
               <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-gray-700">Foto Tambahan (Galeri)</label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {(editingEntry.gallery_images || []).map((img, idx) => (
+                  {(Array.isArray(editingEntry.gallery_images) ? editingEntry.gallery_images : []).map((img, idx) => (
                     <div key={idx} className="relative w-16 h-12 rounded-lg overflow-hidden border bg-gray-100 group">
                       <img src={img} alt={`Galeri ${idx}`} loading="lazy" className="w-full h-full object-cover" />
                       <button
                         onClick={() => {
-                          const newGal = [...(editingEntry.gallery_images || [])];
+                          const newGal = [...(Array.isArray(editingEntry.gallery_images) ? editingEntry.gallery_images : [])];
                           newGal.splice(idx, 1);
                           setEditingEntry({ ...editingEntry, gallery_images: newGal });
                         }}
@@ -698,7 +700,7 @@ export default function PrakiraanManager() {
                           setEditingEntry({
                             ...editingEntry,
                             galleryFiles: [...(editingEntry.galleryFiles || []), file],
-                            gallery_images: [...(editingEntry.gallery_images || []), URL.createObjectURL(file)],
+                            gallery_images: [...(Array.isArray(editingEntry.gallery_images) ? editingEntry.gallery_images : []), URL.createObjectURL(file)],
                           });
                         }
                       }}

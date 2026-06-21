@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { clearAuthCookie } from "@/lib/auth";
+import { clearAuthCookie, clearCsrfCookie } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 import { getUserId, getUsername } from "@/services/admin.service";
 
@@ -15,5 +15,6 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({ success: true, message: "Logout berhasil" });
   clearAuthCookie(response);
+  clearCsrfCookie(response);
   return response;
 }

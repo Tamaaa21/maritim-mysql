@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { CardGridSkeleton } from '@/components/LoadingSkeleton';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import { csrfFetch } from '@/lib/csrf';
 
 export default function PublicationManager() {
   const { isAdmin } = useAdminUser();
@@ -23,7 +24,7 @@ export default function PublicationManager() {
   const fetchList = async () => {
     setLoading(true);
     try {
-      const r = await fetch('/api/admin/publications');
+      const r = await csrfFetch('/api/admin/publications');
       const j = await r.json();
       if (j?.success) setItems(j.data);
     } catch (e) {}
@@ -49,7 +50,7 @@ export default function PublicationManager() {
       form.append('title', title || 'Publikasi Baru');
       form.append('description', description || '');
 
-      const r = await fetch('/api/admin/publications', { method: 'POST', body: form });
+      const r = await csrfFetch('/api/admin/publications', { method: 'POST', body: form });
       const j = await r.json();
       if (j?.success) {
         setFile(null);
@@ -74,7 +75,7 @@ export default function PublicationManager() {
     const confirm = await showConfirm('Hapus Publikasi?', 'Apakah Anda yakin ingin menghapus publikasi/buletin ini?');
     if (!confirm.isConfirmed) return;
     try {
-      const res = await fetch(`/api/admin/publications?id=${id}`, { method: 'DELETE' });
+      const res = await csrfFetch(`/api/admin/publications?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data?.success) {
         showSuccess('Berhasil Dihapus', 'Publikasi telah dihapus.');

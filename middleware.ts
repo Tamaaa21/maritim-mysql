@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { COOKIE_NAME, verifySessionToken } from "@/lib/auth-edge";
+import { COOKIE_NAME, CSRF_COOKIE_NAME, verifySessionToken } from "@/lib/auth-edge";
 
 const PUBLIC_ADMIN_PATHS = ["/api/admin/login"];
+
+// Paths that require auth but NOT CSRF (safe state-changing operations)
+const CSRF_EXEMPT_PATHS = ["/api/admin/logout"];
 
 const PUBLIC_GET_PATHS = [
   "/api/admin/hero-images",
@@ -62,6 +65,24 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // CSRF: State-changing requests must include X-CSRF-Token header matching the cookie
+  // Exempt paths that are safe operations (e.g. logout)
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const isCsrfExempt = CSRF_EXEMPT_PATHS.some(p => pathname.startsWith(p));
+    if (!isCsrfExempt) {
+      const csrfCookie = request.cookies.get(CSRF_COOKIE_NAME)?.value;
+      const csrfHeader = request.headers.get("x-csrf-token");
+
+      if (csrfCookie && csrfHeader && csrfCookie === csrfHeader) {
+        // CSRF valid
+      } else if (!csrfCookie && !csrfHeader) {
+        // No CSRF cookies set (e.g. Bearer token auth without cookies) — allow
+      } else {
+        return NextResponse.json({ success: false, message: "Invalid CSRF token" }, { status: 403 });
+      }
+    }
+  }
+
   // Attach user info to request headers for downstream API routes
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-auth-user-id", result.userId || "");
@@ -81,6 +102,18 @@ export async function middleware(request: NextRequest) {
       path: "/",
       maxAge: 86400,
     });
+
+    // Renew CSRF cookie alongside auth cookie
+    const existingCsrf = request.cookies.get(CSRF_COOKIE_NAME)?.value;
+    if (existingCsrf) {
+      response.cookies.set(CSRF_COOKIE_NAME, existingCsrf, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/",
+        maxAge: 86400,
+      });
+    }
   }
 
   return response;

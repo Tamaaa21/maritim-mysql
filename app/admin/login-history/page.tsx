@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { useAdminUser } from '@/hooks/useAdminUser';
 import AdminPagination from '@/components/AdminPagination';
+import { csrfFetch } from '@/lib/csrf';
 
 interface LoginLog {
   id: string;
@@ -32,7 +33,7 @@ export default function LoginHistoryPage() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch("/api/admin/login-logs");
+      const res = await csrfFetch("/api/admin/login-logs");
       const json = await res.json();
       if (json?.success) {
         setLogs(json.data || []);
@@ -52,7 +53,7 @@ export default function LoginHistoryPage() {
 
   const handleBackup = async () => {
     try {
-      const res = await fetch("/api/admin/login-logs/backup");
+      const res = await csrfFetch("/api/admin/login-logs/backup");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -80,7 +81,7 @@ export default function LoginHistoryPage() {
     
     try {
       const payload = JSON.stringify({ ids: Array.from(selectedLogs) });
-      const res = await fetch("/api/admin/login-logs", { 
+      const res = await csrfFetch("/api/admin/login-logs", { 
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: payload
@@ -128,7 +129,7 @@ export default function LoginHistoryPage() {
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      const res = await fetch("/api/admin/login-logs/restore", {
+      const res = await csrfFetch("/api/admin/login-logs/restore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -345,7 +346,7 @@ export default function LoginHistoryPage() {
   );
 }
 
-function UploadIcon(props: any) {
+function UploadIcon(props: { size?: number }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
   );

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, X, Edit3, Trash2, UserPlus, Shield, ShieldOff, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
+import { csrfFetch } from '@/lib/csrf';
 
 interface User {
   id: string;
@@ -33,7 +34,7 @@ export default function UsersManager() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/admin/users");
+      const res = await csrfFetch("/api/admin/users");
       const json = await res.json();
       if (json?.success) {
         setUsers(json.data || []);
@@ -72,7 +73,7 @@ export default function UsersManager() {
     const confirm = await showConfirm(user.is_active ? "Nonaktifkan Akun?" : "Aktifkan Akun?", `Anda akan ${user.is_active ? "menonaktifkan" : "mengaktifkan"} akun ${user.username}`);
     if (!confirm.isConfirmed) return;
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
+      const res = await csrfFetch(`/api/admin/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: !user.is_active }),
@@ -94,7 +95,7 @@ export default function UsersManager() {
     const confirm = await showConfirm('Hapus Akun?', `Hapus akun ${user.username}? Tindakan ini tidak dapat dibatalkan.`);
     if (!confirm.isConfirmed) return;
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
+      const res = await csrfFetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
       const json = await res.json();
       if (json?.success) {
         showSuccess('Berhasil Dihapus', 'Akun berhasil dihapus');
@@ -126,7 +127,7 @@ export default function UsersManager() {
     setSaving(true);
     try {
       if (modalMode === "add") {
-        const res = await fetch("/api/admin/users", {
+        const res = await csrfFetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(editingUser),
@@ -141,11 +142,11 @@ export default function UsersManager() {
           showError('Gagal', json?.message || "Gagal menambahkan pengguna");
         }
       } else if (editingUser.id) {
-        const payload: any = { nama: editingUser.nama, role: editingUser.role };
+        const payload: Record<string, unknown> = { nama: editingUser.nama, role: editingUser.role };
         if (editingUser.password) {
           payload.password = editingUser.password;
         }
-        const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+        const res = await csrfFetch(`/api/admin/users/${editingUser.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -160,8 +161,9 @@ export default function UsersManager() {
           showError('Gagal', json?.message || "Gagal memperbarui pengguna");
         }
       }
-    } catch (err: any) {
-      showError('Error', err.message || "Terjadi kesalahan");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan";
+      showError('Error', message);
     } finally {
       setSaving(false);
     }

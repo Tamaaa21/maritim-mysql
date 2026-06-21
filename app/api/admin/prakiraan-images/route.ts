@@ -135,7 +135,7 @@ export async function GET(req: Request) {
       .from(schema.prakiraan_images)
       .leftJoin(schema.prakiraan_categories, eq(schema.prakiraan_images.category_id, schema.prakiraan_categories.id));
 
-    let rows: any[];
+    let rows: { prakiraan_images: Record<string, unknown>; prakiraan_categories: Record<string, unknown> | null }[];
     if (filterExpired || activeOnly) {
       rows = await baseQuery.where(
         and(
@@ -147,8 +147,8 @@ export async function GET(req: Request) {
       rows = await baseQuery.orderBy(asc(schema.prakiraan_images.created_at));
     }
 
-    const data = (rows || []).map((row: any) => {
-      const img = { ...row.prakiraan_images };
+    const data = (rows || []).map((row) => {
+      const img = { ...row.prakiraan_images } as Record<string, unknown>;
       if (img.gallery_images && typeof img.gallery_images === "string") {
         try { img.gallery_images = JSON.parse(img.gallery_images); } catch { /* ignore */ }
       }

@@ -8,6 +8,7 @@ import { CardGridSkeleton } from '@/components/LoadingSkeleton';
 import { useAdminUser } from '@/hooks/useAdminUser';
 import { isVideoUrl } from '@/lib/utils';
 import { getYoutubeEmbedUrl, isYoutubeUrl } from '@/lib/youtube';
+import { csrfFetch } from '@/lib/csrf';
 
 export default function DisplaySlideManager() {
   const { isAdmin } = useAdminUser();
@@ -24,7 +25,7 @@ export default function DisplaySlideManager() {
     setLoading(true);
     setDbError(null);
     try {
-      const r = await fetch('/api/admin/display');
+      const r = await csrfFetch('/api/admin/display');
       const j = await r.json();
       if (j?.success) {
         setItems(j.data);
@@ -56,7 +57,7 @@ export default function DisplaySlideManager() {
           }
         } catch (e) { }
       }
-      const r = await fetch('/api/admin/display', { method: 'POST', body: form });
+      const r = await csrfFetch('/api/admin/display', { method: 'POST', body: form });
       const j = await r.json();
       if (j?.success) {
         setFile(null);
@@ -77,7 +78,7 @@ export default function DisplaySlideManager() {
     const isConfirmed = await showConfirm('Hapus Display?', 'Apakah Anda yakin ingin menghapus display ini?');
     if (!isConfirmed.isConfirmed) return;
     try {
-      const r = await fetch(`/api/admin/display?id=${id}`, { method: 'DELETE' });
+      const r = await csrfFetch(`/api/admin/display?id=${id}`, { method: 'DELETE' });
       const j = await r.json();
       if (j?.success) {
         showSuccess('Berhasil!', 'Display telah dihapus.');
@@ -92,7 +93,7 @@ export default function DisplaySlideManager() {
 
   const handleReorder = async (id: string, direction: 'up' | 'down') => {
     try {
-      const r = await fetch('/api/admin/display', {
+      const r = await csrfFetch('/api/admin/display', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, direction }),
@@ -133,7 +134,7 @@ export default function DisplaySlideManager() {
     setDraggedIndex(null);
     try {
       const itemIds = items.map((item) => item.id);
-      const r = await fetch('/api/admin/display', {
+      const r = await csrfFetch('/api/admin/display', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: itemIds }),

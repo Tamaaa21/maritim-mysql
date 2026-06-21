@@ -10,9 +10,19 @@ export async function POST(request: Request) {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       || request.headers.get("x-real-ip")
       || "unknown";
-    const rateCheck = checkRateLimit(`buku-tamu:${ip}`, 5, 15 * 60 * 1000);
+    const rateCheck = checkRateLimit(`buku-tamu:${ip}`, 5, 60 * 1000);
     if (!rateCheck.allowed) {
-      return NextResponse.json({ success: false, message: "Terlalu banyak permintaan. Silakan coba lagi nanti." }, { status: 429 });
+      return NextResponse.json(
+        { success: false, message: "Terlalu banyak permintaan. Silakan coba lagi nanti." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": "5",
+            "X-RateLimit-Remaining": "0",
+            "Retry-After": "60",
+          },
+        }
+      );
     }
 
     const data = await request.json();

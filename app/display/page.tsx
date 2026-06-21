@@ -66,7 +66,6 @@ export default function DisplayPage() {
   // Mute & Volume State (sound starts off by default: isMuted=true)
   const [isMuted, setIsMuted] = useState(true);
   const [volume, setVolume] = useState(50);
-  const ytPlayerRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Time & Date State for Header Clock
@@ -191,121 +190,7 @@ export default function DisplayPage() {
     setPamphletIndex((s) => (s + 1) % pamphletImages.length);
   }, [pamphletImages.length]);
 
-  // Load YouTube Iframe API Script on mount
-  useEffect(() => {
-    if (typeof window !== "undefined" && !(window as any).YT) {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-    }
-  }, []);
-
-  // YouTube Player Instance for tracking video ENDED state
-  useEffect(() => {
-    if (!pamphletImages || pamphletImages.length === 0) return;
-    const currentUrl = pamphletImages[pamphletIndex];
-    if (!isYoutubeUrl(currentUrl)) return;
-
-    const videoId = getYoutubeVideoId(currentUrl);
-    if (!videoId) return;
-
-    let player: any = null;
-
-    const onPlayerStateChange = (event: any) => {
-      // event.data === 0 means YT.PlayerState.ENDED
-      if (event.data === 0) {
-        handleNext();
-      }
-    };
-
-    const initPlayer = () => {
-      try {
-        player = new (window as any).YT.Player("youtube-player", {
-          width: "100%",
-          height: "100%",
-          videoId: videoId,
-          playerVars: {
-            autoplay: 1,
-            mute: isMuted ? 1 : 0, // apply initial state
-            controls: 0,
-            rel: 0,
-            loop: 0, // do not loop so we can detect ended event
-            playlist: videoId,
-            showinfo: 0,
-            iv_load_policy: 3,
-            disablekb: 1,
-            fs: 0,
-            modestbranding: 1
-          },
-          events: {
-            onStateChange: onPlayerStateChange,
-            onReady: (e: any) => {
-              ytPlayerRef.current = e.target;
-              if (isMuted) {
-                e.target.mute();
-              } else {
-                e.target.unMute();
-                e.target.setVolume(volume);
-              }
-              e.target.playVideo();
-            }
-          }
-        });
-      } catch (err) {
-        console.error("Gagal inisialisasi YouTube Player:", err);
-      }
-    };
-
-    if ((window as any).YT && (window as any).YT.Player) {
-      initPlayer();
-    } else {
-      const checkInterval = setInterval(() => {
-        if ((window as any).YT && (window as any).YT.Player) {
-          initPlayer();
-          clearInterval(checkInterval);
-        }
-      }, 500);
-      return () => {
-        clearInterval(checkInterval);
-        if (player && player.destroy) {
-          player.destroy();
-        }
-      };
-    }
-
-    return () => {
-      if (player && player.destroy) {
-        try {
-          player.destroy();
-        } catch (e) { }
-      }
-      ytPlayerRef.current = null;
-    };
-  }, [pamphletImages, pamphletIndex, handleNext, isMuted, volume]);
-
-  // Synchronize mute/volume state changes dynamically to active players
-  useEffect(() => {
-    // Sync to Native Video
-    if (videoRef.current) {
-      videoRef.current.muted = isMuted;
-      videoRef.current.volume = volume / 100;
-    }
-
-    // Sync to YouTube Player
-    if (ytPlayerRef.current && typeof ytPlayerRef.current.setVolume === "function") {
-      try {
-        if (isMuted) {
-          ytPlayerRef.current.mute();
-        } else {
-          ytPlayerRef.current.unMute();
-          ytPlayerRef.current.setVolume(volume);
-        }
-      } catch (e) {
-        console.error("Failed to sync volume to YT player:", e);
-      }
-    }
-  }, [isMuted, volume, pamphletIndex]);
+  // YouTube player removed — using direct iframe embed for autoplay compatibility
 
   const togglePlay = () => setIsPlaying(!isPlaying);
 
@@ -430,10 +315,18 @@ export default function DisplayPage() {
                 {/* Slide image/video/YouTube rendered directly - wraps borders to image dimensions */}
                 {isYoutubeUrl(pamphletImages[pamphletIndex]) ? (
                   <div className="w-full h-full bg-black flex items-center justify-center rounded-3xl overflow-hidden relative shadow-inner">
-                    <div id="youtube-player" className="w-full h-full" />
+                    <iframe
+                      key={pamphletImages[pamphletIndex]}
+                      src={`https://www.youtube.com/embed/${getYoutubeVideoId(pamphletImages[pamphletIndex])}?autoplay=1&mute=1&loop=1&playlist=${getYoutubeVideoId(pamphletImages[pamphletIndex])}&controls=0&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1`}
+                      className="w-full h-full"
+                      allow="autoplay; encrypted-media; fullscreen"
+                      allowFullScreen
+                      frameBorder="0"
+                    />
                   </div>
                 ) : isVideoUrl(pamphletImages[pamphletIndex]) ? (
                   <video
+                    key={pamphletImages[pamphletIndex]}
                     ref={videoRef}
                     src={pamphletImages[pamphletIndex]}
                     className="h-full w-auto object-contain max-w-full max-h-full transition-all duration-300 shadow-inner rounded-3xl"

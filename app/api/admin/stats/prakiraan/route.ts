@@ -28,7 +28,7 @@ export async function GET() {
       active: activeResult[0]?.count ?? 0,
       inactive: inactiveResult[0]?.count ?? 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
     return NextResponse.json({ success: false, active: 0, inactive: 0 }, { status: 500 });
   }

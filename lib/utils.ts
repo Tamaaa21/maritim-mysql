@@ -6,5 +6,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function isVideoUrl(url: string) {
-  return !!(url && (url.match(/\.(mp4|webm|ogg|mov|mkv|avi|3gp|flv|wmv)/i) || url.includes("video")));
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return !!(
+    lower.match(/\.(mp4|webm|ogg|mov|mkv|avi|3gp|flv|wmv|m4v)/i) ||
+    lower.includes("/video/") ||
+    lower.includes("video.") ||
+    lower.includes("type=video")
+  );
 }

@@ -16,7 +16,6 @@ export default function Home() {
       <Navbar />
       <HeroSection />
       <DynamicContent />
-      <PrakiraanSection limit={4} />
       <Footer />
     </main>
   );

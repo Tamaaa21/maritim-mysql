@@ -5,21 +5,11 @@ import { eq, asc } from "drizzle-orm";
 import { hashPassword, forbidden } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 import { createUserSchema } from "@/lib/validation";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getRole, getUsername, getUserId } from "@/services/admin.service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function getRole(req: NextRequest) {
-  return req.headers.get("x-auth-user-role") || "";
-}
-
-function getUsername(req: NextRequest) {
-  return req.headers.get("x-auth-user-username") || "";
-}
-
-function getUserId(req: NextRequest) {
-  return req.headers.get("x-auth-user-id") || "";
-}
 
 export async function GET(request: NextRequest) {
   const role = getRole(request);
@@ -49,6 +39,23 @@ export async function POST(request: NextRequest) {
   const role = getRole(request);
   if (role !== "super_admin" && role !== "admin") {
     return forbidden("Hanya admin yang dapat menambah pengguna");
+  }
+
+  // Rate limit: 10 user creations per admin per 1 minute
+  const userId = getUserId(request);
+  const rateCheck = checkRateLimit(`create-user:${userId}`, 10, 60 * 1000);
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { success: false, message: "Terlalu banyak permintaan. Silakan coba lagi nanti." },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": "10",
+          "X-RateLimit-Remaining": "0",
+          "Retry-After": "60",
+        },
+      }
+    );
   }
 
   try {

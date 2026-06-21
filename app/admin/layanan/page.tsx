@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { CardGridSkeleton } from '@/components/LoadingSkeleton';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import { csrfFetch } from '@/lib/csrf';
 
 interface LayananCard {
   id: string;
@@ -55,7 +56,7 @@ export default function LayananAdminPage() {
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/layanan-cards");
+      const res = await csrfFetch("/api/admin/layanan-cards");
       const json = await res.json();
       if (json?.success) {
         setServices(json.data || []);
@@ -95,7 +96,7 @@ export default function LayananAdminPage() {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await fetch(`/api/admin/layanan-cards/${id}`, {
+      const res = await csrfFetch(`/api/admin/layanan-cards/${id}`, {
         method: "DELETE",
       });
       const json = await res.json();
@@ -114,7 +115,7 @@ export default function LayananAdminPage() {
   const uploadCoverImage = async (file: File): Promise<string> => {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch("/api/admin/upload", { method: "POST", body: form });
+    const res = await csrfFetch("/api/admin/upload", { method: "POST", body: form });
     const json = await res.json();
     if (json?.success && json.url) return json.url;
     throw new Error(json?.message || "Upload cover gagal");
@@ -137,7 +138,7 @@ export default function LayananAdminPage() {
       }
 
       if (modalMode === "add") {
-        const res = await fetch("/api/admin/layanan-cards", {
+        const res = await csrfFetch("/api/admin/layanan-cards", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -156,7 +157,7 @@ export default function LayananAdminPage() {
           showError('Gagal Menyimpan', json?.message || 'Unknown error');
         }
       } else {
-        const res = await fetch(`/api/admin/layanan-cards/${selectedId}`, {
+        const res = await csrfFetch(`/api/admin/layanan-cards/${selectedId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

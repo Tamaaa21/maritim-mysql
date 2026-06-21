@@ -370,7 +370,7 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
                 >
                   <div className="relative h-44 w-full overflow-hidden flex-shrink-0">
                     <img
-                      src={card.image_url}
+                      src={card.url}
                       alt={card.title}
                       loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -433,7 +433,7 @@ export default function PrakiraanSection({ limit }: { limit?: number }) {
           <div className="mt-10 text-center">
             <a
               href="/prakiraan"
-              className="inline-flex items-center gap-2 px-8 py-3 border-2 border-[#003399] text-[#003399] hover:bg-[#003399] hover:text-white font-semibold text-sm rounded-full transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3 border-2 border-[#003399] text-[#003399] hover:bg-[#003399] hover:text-white font-semibold text-sm rounded-full transition-all duration-200 w-auto"
             >
               Selanjutnya <ChevronRight size={16} />
             </a>

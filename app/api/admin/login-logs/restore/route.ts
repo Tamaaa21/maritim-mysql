@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import crypto from "crypto";
 import { db, schema } from "@/db";
-
+import { isAdmin, getUserId, getUsername } from "@/services/admin.service";
+import { logActivity } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const body = await req.json();
 
@@ -36,6 +42,7 @@ export async function POST(req: Request) {
       inserted++;
     }
 
+    logActivity(getUserId(req), `Merestore ${inserted} data login logs`, getUsername(req));
     return NextResponse.json({
       success: true,
       message: `Berhasil merestore ${inserted} data login logs`,

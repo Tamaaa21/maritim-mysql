@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { hashPassword, forbidden } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 import { updateUserSchema } from "@/lib/validation";
+import { getRole, getUsername, getUserId } from "@/services/admin.service";
 
 export const runtime = "nodejs";
 
@@ -14,18 +15,6 @@ function getId(request: NextRequest): string | undefined {
   } catch {
     return undefined;
   }
-}
-
-function getUsername(request: NextRequest) {
-  return request.headers.get("x-auth-user-username") || "";
-}
-
-function getRole(request: NextRequest) {
-  return request.headers.get("x-auth-user-role") || "";
-}
-
-function getUserId(request: NextRequest) {
-  return request.headers.get("x-auth-user-id") || "";
 }
 
 export async function PATCH(request: NextRequest) {

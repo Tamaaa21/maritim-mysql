@@ -19,7 +19,7 @@ export async function GET() {
   try {
     const data = await db.select().from(schema.prakiraan_categories).orderBy(asc(schema.prakiraan_categories.name));
     return okCached(data || []);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
     return serverError(error);
   }

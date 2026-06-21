@@ -148,16 +148,16 @@ export default function AdminDashboard() {
                 </Link>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {expiringPrakiraan.map((item: any) => (
+                {expiringPrakiraan.map((item: Record<string, unknown>) => (
                   <span
-                    key={item.id}
+                    key={item.id as string}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-200 rounded-lg text-xs font-semibold text-amber-700"
                   >
-                    {item.title}
+                    {item.title as string}
                     <span className="text-amber-400 font-normal">
                       &middot;{" "}
                       {item.waktu_berakhir
-                        ? new Date(item.waktu_berakhir).toLocaleDateString("id-ID", {
+                        ? new Date(item.waktu_berakhir as string).toLocaleDateString("id-ID", {
                             day: "2-digit",
                             month: "short",
                             hour: "2-digit",

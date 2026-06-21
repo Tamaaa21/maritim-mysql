@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { createSessionToken as edgeCreateToken, verifySessionToken as edgeVerifyToken, COOKIE_NAME } from "./auth-edge";
+import { createSessionToken as edgeCreateToken, verifySessionToken as edgeVerifyToken, COOKIE_NAME, CSRF_COOKIE_NAME } from "./auth-edge";
 
-export { COOKIE_NAME, SESSION_DURATION_MS } from "./auth-edge";
+export { COOKIE_NAME, CSRF_COOKIE_NAME, SESSION_DURATION_MS } from "./auth-edge";
 
 const SALT_ROUNDS = 12;
 
@@ -40,11 +40,31 @@ export function setAuthCookie(response: NextResponse, token: string) {
   });
 }
 
+export function setCsrfCookie(response: NextResponse, token: string) {
+  response.cookies.set(CSRF_COOKIE_NAME, token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+    maxAge: 86400,
+  });
+}
+
 export function clearAuthCookie(response: NextResponse) {
   response.cookies.set(COOKIE_NAME, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+}
+
+export function clearCsrfCookie(response: NextResponse) {
+  response.cookies.set(CSRF_COOKIE_NAME, "", {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
     path: "/",
     maxAge: 0,
   });

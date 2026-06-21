@@ -5,6 +5,7 @@ import { Lock, Eye, EyeOff, Save, User, Shield } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from '@/lib/sweetalert';
 import { useAdminUser } from '@/hooks/useAdminUser';
+import { csrfFetch } from '@/lib/csrf';
 
 export default function PengaturanPage() {
   const { user } = useAdminUser();
@@ -37,7 +38,7 @@ export default function PengaturanPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/change-password", {
+      const res = await csrfFetch("/api/admin/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oldPassword, newPassword }),
