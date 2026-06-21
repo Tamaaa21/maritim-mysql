@@ -29,16 +29,16 @@ export async function POST(req: Request) {
 
       if (parsed.data.explanation) insertValues.explanation = parsed.data.explanation;
       if (parsed.data.slug) insertValues.slug = parsed.data.slug;
-      if (parsed.data.waktu_mulai) insertValues.waktu_mulai = parsed.data.waktu_mulai;
-      if (parsed.data.waktu_berakhir) insertValues.waktu_berakhir = parsed.data.waktu_berakhir;
+      if (parsed.data.waktu_mulai) insertValues.waktu_mulai = new Date(parsed.data.waktu_mulai);
+      if (parsed.data.waktu_berakhir) insertValues.waktu_berakhir = new Date(parsed.data.waktu_berakhir);
       if (parsed.data.category_id) insertValues.category_id = parsed.data.category_id;
       if (parsed.data.display_type && VALID_DISPLAY_TYPES.includes(parsed.data.display_type)) {
         insertValues.display_type = parsed.data.display_type;
       }
       if (parsed.data.next_url) insertValues.next_url = parsed.data.next_url;
       if (parsed.data.next_explanation) insertValues.next_explanation = parsed.data.next_explanation;
-      if (parsed.data.next_waktu_mulai) insertValues.next_waktu_mulai = parsed.data.next_waktu_mulai;
-      if (parsed.data.next_waktu_berakhir) insertValues.next_waktu_berakhir = parsed.data.next_waktu_berakhir;
+      if (parsed.data.next_waktu_mulai) insertValues.next_waktu_mulai = new Date(parsed.data.next_waktu_mulai);
+      if (parsed.data.next_waktu_berakhir) insertValues.next_waktu_berakhir = new Date(parsed.data.next_waktu_berakhir);
       if (parsed.data.gallery_images) insertValues.gallery_images = JSON.stringify(parsed.data.gallery_images);
       if (parsed.data.prioritas !== undefined) insertValues.prioritas = parsed.data.prioritas;
       if (body.uploader) insertValues.uploader = body.uploader;
@@ -91,12 +91,12 @@ export async function POST(req: Request) {
     if (categoryId) insertValues.category_id = categoryId;
     if (explanation) insertValues.explanation = explanation;
     if (uploader) insertValues.uploader = uploader;
-    if (waktuMulai) insertValues.waktu_mulai = waktuMulai;
-    if (waktuBerakhir) insertValues.waktu_berakhir = waktuBerakhir;
+    if (waktuMulai) insertValues.waktu_mulai = new Date(waktuMulai);
+    if (waktuBerakhir) insertValues.waktu_berakhir = new Date(waktuBerakhir);
     if (nextPublicUrl) insertValues.next_url = nextPublicUrl;
     if (nextExplanation) insertValues.next_explanation = nextExplanation;
-    if (nextWaktuMulai) insertValues.next_waktu_mulai = nextWaktuMulai;
-    if (nextWaktuBerakhir) insertValues.next_waktu_berakhir = nextWaktuBerakhir;
+    if (nextWaktuMulai) insertValues.next_waktu_mulai = new Date(nextWaktuMulai);
+    if (nextWaktuBerakhir) insertValues.next_waktu_berakhir = new Date(nextWaktuBerakhir);
     if (displayType && VALID_DISPLAY_TYPES.includes(displayType)) {
       insertValues.display_type = displayType;
     }

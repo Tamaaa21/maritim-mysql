@@ -11,18 +11,23 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const { id } = await params;
     const body = await req.json();
-    const parsed = strukturOrganisasiSchema.safeParse(body);
+    const parsed = strukturOrganisasiSchema.partial().safeParse(body);
     if (!parsed.success) {
       return badRequest(parsed.error.errors.map(e => e.message).join(", "));
     }
 
-    await db.update(schema.struktur_organisasi).set({
-      jabatan: parsed.data.jabatan,
-      nama: parsed.data.nama || "",
-      inisial: parsed.data.inisial || "",
-      deskripsi: parsed.data.deskripsi || null,
-      urutan: typeof parsed.data.urutan === "number" ? parsed.data.urutan : 0,
-    }).where(eq(schema.struktur_organisasi.id, id));
+    const updateData: Record<string, unknown> = {};
+    if (parsed.data.jabatan !== undefined) updateData.jabatan = parsed.data.jabatan;
+    if (parsed.data.nama !== undefined) updateData.nama = parsed.data.nama || "";
+    if (parsed.data.inisial !== undefined) updateData.inisial = parsed.data.inisial || "";
+    if (parsed.data.deskripsi !== undefined) updateData.deskripsi = parsed.data.deskripsi || null;
+    if (parsed.data.urutan !== undefined) updateData.urutan = typeof parsed.data.urutan === "number" ? parsed.data.urutan : 0;
+
+    if (Object.keys(updateData).length === 0) {
+      return badRequest("Tidak ada field yang diupdate");
+    }
+
+    await db.update(schema.struktur_organisasi).set(updateData).where(eq(schema.struktur_organisasi.id, id));
 
     const rows = await db.select().from(schema.struktur_organisasi).where(eq(schema.struktur_organisasi.id, id));
     if (rows.length === 0) return notFound();

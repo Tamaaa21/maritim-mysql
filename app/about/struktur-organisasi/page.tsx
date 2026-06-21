@@ -5,13 +5,47 @@ import { ArrowLeft } from "lucide-react";
 import { getStrukturOrganisasi } from "@/services/public.service";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Struktur Organisasi",
   description: "Struktur Organisasi BMKG Maritim Tegal",
 };
 
+function StrukturCard({ item, large }: { item: any; large?: boolean }) {
+  const isPhoto = item.inisial?.startsWith("http") || item.inisial?.startsWith("/");
+  return (
+    <div className={`bg-white border border-slate-200/80 rounded-2xl shadow-sm hover:shadow-md transition-all text-center h-full flex flex-col ${large ? "p-6 md:p-8" : "p-4 md:p-5"}`}>
+      <div className="flex flex-col items-center gap-3 flex-1">
+        {isPhoto ? (
+          <img src={item.inisial} alt={item.nama || item.jabatan} loading="lazy" className={`${large ? "w-20 h-20" : "w-14 h-14"} rounded-full object-cover border-2 border-slate-200 shadow-md`} />
+        ) : (
+          <div className={`${large ? "w-20 h-20 text-2xl" : "w-14 h-14 text-lg"} rounded-full bg-gradient-to-br from-[#003399] to-[#002266] text-white flex items-center justify-center font-extrabold shadow-md`}>
+            {item.inisial?.charAt(0)?.toUpperCase() || "?"}
+          </div>
+        )}
+        <div className="min-w-0 w-full flex-1">
+          {item.nama ? (
+            <>
+              <h3 className={`font-bold text-slate-800 ${large ? "text-lg md:text-xl" : "text-sm md:text-base"}`}>{item.nama}</h3>
+              <p className="text-[#003399] font-semibold text-xs md:text-sm mt-0.5">{item.jabatan}</p>
+            </>
+          ) : (
+            <h3 className={`font-bold text-[#003399] ${large ? "text-lg md:text-xl" : "text-sm md:text-base"}`}>{item.jabatan}</h3>
+          )}
+          {item.deskripsi && (
+            <p className="mt-2 text-slate-500 text-xs leading-relaxed">{item.deskripsi}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default async function StrukturOrganisasiPage() {
   const items = await getStrukturOrganisasi();
+  const leader = items.find((item: any) => item.urutan === 1);
+  const subordinates = items.filter((item: any) => item.urutan !== 1).sort((a: any, b: any) => a.urutan - b.urutan);
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col justify-between">
@@ -35,29 +69,38 @@ export default async function StrukturOrganisasiPage() {
         {/* Content */}
         <section className="py-16 bg-[#f8fafc]">
           <div className="max-w-5xl mx-auto px-6">
-            <div className="space-y-6">
-              {items.map((item) => (
-                <div key={item.id} className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all">
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#003399] to-[#002266] text-white flex items-center justify-center font-extrabold text-lg shrink-0 shadow-md">
-                      {item.inisial?.charAt(0) || "?"}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-slate-800 text-base md:text-lg truncate">{item.nama}</h3>
-                      <p className="text-[#003399] font-semibold text-sm">{item.jabatan}</p>
-                    </div>
+            {items.length === 0 ? (
+              <p className="text-center text-slate-400 py-12">Belum ada data struktur organisasi.</p>
+            ) : (
+              <div className="flex flex-col items-center gap-8">
+                {/* Row 1: Leader (urutan 1) */}
+                {leader && (
+                  <div className="flex flex-col items-center">
+                    <StrukturCard item={leader} large />
+                    {/* Connector line */}
+                    {subordinates.length > 0 && (
+                      <div className="w-0.5 h-8 bg-slate-300" />
+                    )}
                   </div>
-                  {item.deskripsi && (
-                    <p className="mt-4 text-slate-600 text-sm leading-relaxed border-t border-slate-100 pt-4">
-                      {item.deskripsi}
-                    </p>
-                  )}
-                </div>
-              ))}
-              {items.length === 0 && (
-                <p className="text-center text-slate-400 py-12">Belum ada data struktur organisasi.</p>
-              )}
-            </div>
+                )}
+
+                {/* Connector horizontal line */}
+                {subordinates.length > 0 && (
+                  <div className="w-full max-w-2xl h-0.5 bg-slate-300 relative">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-4 bg-slate-300 -mt-4" />
+                  </div>
+                )}
+
+                {/* Row 2+: Subordinates */}
+                {subordinates.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full items-stretch">
+                    {subordinates.map((item: any) => (
+                      <StrukturCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="mt-10 text-center">
               <Link href="/about" className="inline-flex items-center gap-2 px-6 py-3 bg-[#003399] hover:bg-[#002266] text-white text-sm font-semibold rounded-full transition-all shadow-md hover:shadow-lg group">
