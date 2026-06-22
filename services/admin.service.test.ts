@@ -52,8 +52,8 @@ describe("admin.service", () => {
       expect(isAdmin(req)).toBe(true);
     });
 
-    it("should return false for karyawan role", () => {
-      const req = createMockRequest({ "x-auth-user-role": "karyawan" });
+    it("should return false for user role", () => {
+      const req = createMockRequest({ "x-auth-user-role": "user" });
       expect(isAdmin(req)).toBe(false);
     });
 

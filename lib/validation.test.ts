@@ -75,19 +75,16 @@ describe("validation schemas", () => {
       expect(result.success).toBe(false);
     });
 
-    it("should default role to karyawan", () => {
-      const result = createUserSchema.safeParse({
+    it("should default role to user", () => {
+      const result = createUserSchema.parse({
         username: "admin",
         password: "Admin123",
       });
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.role).toBe("karyawan");
-      }
+      expect(result.role).toBe("user");
     });
 
     it("should accept valid roles", () => {
-      for (const role of ["super_admin", "admin", "karyawan"]) {
+      for (const role of ["super_admin", "admin", "user"]) {
         const result = createUserSchema.safeParse({
           username: "user",
           password: "Admin123",

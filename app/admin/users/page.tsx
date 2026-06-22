@@ -52,7 +52,7 @@ export default function UsersManager() {
 
   const handleOpenAdd = () => {
     setModalMode("add");
-    setEditingUser({ username: "", password: "", confirmPassword: "", nama: "", role: "karyawan" });
+    setEditingUser({ username: "", password: "", confirmPassword: "", nama: "", role: "user" });
     setIsModalOpen(true);
   };
 
@@ -375,7 +375,7 @@ export default function UsersManager() {
                   className="w-full rounded-xl border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#003399] bg-white text-gray-900"
                   disabled={saving}
                 >
-                  <option value="karyawan">Karyawan</option>
+                  <option value="user">User</option>
                   <option value="admin">Admin</option>
                 </select>
                 <p className="text-[11px] text-gray-400 mt-1">

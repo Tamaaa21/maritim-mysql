@@ -14,13 +14,13 @@ const passwordSchema = z.string()
 export const createUserSchema = z.object({
   username: z.string().min(3, "Username minimal 3 karakter"),
   password: passwordSchema,
-  role: z.enum(["super_admin", "admin", "karyawan"]).default("karyawan"),
+  role: z.enum(["super_admin", "admin", "user"]).default("user"),
   nama: z.string().optional(),
 });
 
 export const updateUserSchema = z.object({
   nama: z.string().optional(),
-  role: z.enum(["super_admin", "admin", "karyawan"]).optional(),
+  role: z.enum(["super_admin", "admin", "user"]).optional(),
   is_active: z.boolean().optional(),
   password: passwordSchema.optional(),
 });

@@ -19,8 +19,8 @@ function getId(request: NextRequest): string | undefined {
 
 export async function PATCH(request: NextRequest) {
   const role = getRole(request);
-  if (role !== "super_admin" && role !== "admin") {
-    return forbidden("Hanya admin yang dapat mengubah pengguna");
+  if (role !== "super_admin") {
+    return forbidden("Hanya Super Admin yang dapat mengubah pengguna");
   }
 
   try {
@@ -82,8 +82,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const role = getRole(request);
-  if (role !== "super_admin" && role !== "admin") {
-    return forbidden("Hanya admin yang dapat menghapus pengguna");
+  if (role !== "super_admin") {
+    return forbidden("Hanya Super Admin yang dapat menghapus pengguna");
   }
 
   try {

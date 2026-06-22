@@ -218,7 +218,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-slate-800 text-sm md:text-base truncate group-hover:text-[#003399] transition-colors">Manajemen Karyawan</p>
-              <p className="text-slate-400 text-xs mt-0.5">Atur hak akses pengguna dan profil akun karyawan</p>
+              <p className="text-slate-400 text-xs mt-0.5">Atur hak akses pengguna dan profil akun user</p>
             </div>
             <ArrowRight size={16} className="text-slate-300 group-hover:text-[#003399] group-hover:translate-x-1 transition-all flex-shrink-0" />
           </Link>

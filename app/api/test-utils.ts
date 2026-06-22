@@ -47,7 +47,7 @@ export function createSuperAdminHeaders(overrides: Record<string, string> = {}) 
 
 export function createKaryawanHeaders(overrides: Record<string, string> = {}) {
   return createAdminHeaders({
-    "x-auth-user-role": "karyawan",
+    "x-auth-user-role": "user",
     ...overrides,
   });
 }

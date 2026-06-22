@@ -35,7 +35,12 @@ interface UserInfo {
   id: string;
 }
 
-const navSections = [
+const navSections: Array<{
+  title?: string;
+  adminOnly?: boolean;
+  superAdminOnly?: boolean;
+  items: Array<{ href: string; label: string; icon: any }>;
+}> = [
   {
     items: [
       { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -66,9 +71,9 @@ const navSections = [
   },
   {
     title: "ADMINISTRASI",
-    adminOnly: true,
+    superAdminOnly: true,
     items: [
-      { href: "/admin/users", label: "Manajemen Karyawan", icon: Users },
+      { href: "/admin/users", label: "Manajemen User", icon: Users },
     ]
   },
   {
@@ -128,7 +133,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           setIsLoggedIn(true);
           setLoading(false);
 
-          // Redirect jika role karyawan akses halaman admin-only
+          // Redirect jika role user akses halaman admin-only
           const isUserAdmin = data.user.role === "admin" || data.user.role === "super_admin";
           if (!isUserAdmin && ADMIN_ONLY_PATHS.includes(pathname)) {
             router.push("/admin/dashboard");
@@ -209,6 +214,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           <nav className="flex-1 overflow-y-auto p-4 space-y-6">
             {navSections.map((section, idx) => {
               if (section.adminOnly && !isAdmin) return null;
+              if (section.superAdminOnly && user?.role !== "super_admin") return null;
 
               return (
                 <div key={idx} className="space-y-1">

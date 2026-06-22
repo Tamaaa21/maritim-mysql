@@ -42,19 +42,25 @@ describe("API: /api/admin/users GET", () => {
     vi.clearAllMocks();
   });
 
-  it("should return 200 for admin role", async () => {
+  it("should return 200 for super_admin role", async () => {
     mockSelectResult.orderBy.mockResolvedValue([
-      { id: "u1", username: "user1", role: "karyawan", nama: "User 1", is_active: true, created_at: "2024-01-01" },
+      { id: "u1", username: "user1", role: "user", nama: "User 1", is_active: true, created_at: "2024-01-01" },
     ]);
 
-    const req = createMockRequest({ method: "GET", headers: createAdminHeaders() });
+    const req = createMockRequest({ method: "GET", headers: createSuperAdminHeaders() });
     const response = await usersGET(req);
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.success).toBe(true);
   });
 
-  it("should return 403 for karyawan role", async () => {
+  it("should return 403 for admin role", async () => {
+    const req = createMockRequest({ method: "GET", headers: createAdminHeaders() });
+    const response = await usersGET(req);
+    expect(response.status).toBe(403);
+  });
+
+  it("should return 403 for user role", async () => {
     const req = createMockRequest({ method: "GET", headers: createKaryawanHeaders() });
     const response = await usersGET(req);
     expect(response.status).toBe(403);
@@ -66,11 +72,11 @@ describe("API: /api/admin/users POST", () => {
     vi.clearAllMocks();
   });
 
-  it("should return 403 for karyawan role", async () => {
+  it("should return 403 for user role", async () => {
     const req = createMockRequest({
       method: "POST",
       headers: createKaryawanHeaders(),
-      body: { username: "newuser", password: "Admin123", role: "karyawan" },
+      body: { username: "newuser", password: "Admin123", role: "user" },
     });
     const response = await usersPOST(req);
     expect(response.status).toBe(403);
@@ -79,7 +85,7 @@ describe("API: /api/admin/users POST", () => {
   it("should return 400 on invalid data", async () => {
     const req = createMockRequest({
       method: "POST",
-      headers: createAdminHeaders(),
+      headers: createSuperAdminHeaders(),
       body: { username: "", password: "" },
     });
     const response = await usersPOST(req);
@@ -91,8 +97,8 @@ describe("API: /api/admin/users POST", () => {
 
     const req = createMockRequest({
       method: "POST",
-      headers: createAdminHeaders(),
-      body: { username: "existing", password: "Admin123", role: "karyawan" },
+      headers: createSuperAdminHeaders(),
+      body: { username: "existing", password: "Admin123", role: "user" },
     });
     const response = await usersPOST(req);
     expect(response.status).toBe(409);
@@ -112,12 +118,12 @@ describe("API: /api/admin/users POST", () => {
   it("should return 200 on successful create", async () => {
     mockSelectResult.limit
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ id: "new-id", username: "newuser", role: "karyawan", nama: "newuser", is_active: true, created_at: "2024-01-01" }]);
+      .mockResolvedValueOnce([{ id: "new-id", username: "newuser", role: "user", nama: "newuser", is_active: true, created_at: "2024-01-01" }]);
 
     const req = createMockRequest({
       method: "POST",
-      headers: createAdminHeaders(),
-      body: { username: "newuser", password: "Admin123", role: "karyawan" },
+      headers: createSuperAdminHeaders(),
+      body: { username: "newuser", password: "Admin123", role: "user" },
     });
     const response = await usersPOST(req);
     expect(response.status).toBe(200);
@@ -131,7 +137,7 @@ describe("API: /api/admin/users/[id] PATCH", () => {
     vi.clearAllMocks();
   });
 
-  it("should return 403 for karyawan role", async () => {
+  it("should return 403 for user role", async () => {
     const req = createMockRequest({
       method: "PATCH",
       url: "http://localhost:3000/api/admin/users/user-1",
@@ -146,28 +152,33 @@ describe("API: /api/admin/users/[id] PATCH", () => {
     const req = createMockRequest({
       method: "PATCH",
       url: "http://localhost:3000/api/admin/users/user-1",
-      headers: createAdminHeaders(),
+      headers: createSuperAdminHeaders(),
       body: {},
     });
     const response = await userPATCH(req);
     expect(response.status).toBe(400);
   });
 
-  it("should return 403 when admin tries to set super_admin role", async () => {
+  it("should allow super_admin to set super_admin role", async () => {
+    mockUpdateWhere.mockResolvedValue([]);
+    mockSelectResult.limit.mockResolvedValue([{
+      id: "user-1", username: "user1", role: "super_admin", nama: "Updated", is_active: true, created_at: "2024-01-01"
+    }]);
+
     const req = createMockRequest({
       method: "PATCH",
       url: "http://localhost:3000/api/admin/users/user-1",
-      headers: createAdminHeaders(),
+      headers: createSuperAdminHeaders(),
       body: { role: "super_admin" },
     });
     const response = await userPATCH(req);
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
   });
 
   it("should return 200 on successful update", async () => {
     mockUpdateWhere.mockResolvedValue([]);
     mockSelectResult.limit.mockResolvedValue([{
-      id: "user-1", username: "user1", role: "karyawan", nama: "Updated", is_active: true, created_at: "2024-01-01"
+      id: "user-1", username: "user1", role: "user", nama: "Updated", is_active: true, created_at: "2024-01-01"
     }]);
 
     const req = createMockRequest({
@@ -186,7 +197,7 @@ describe("API: /api/admin/users/[id] DELETE", () => {
     vi.clearAllMocks();
   });
 
-  it("should return 403 for karyawan role", async () => {
+  it("should return 403 for user role", async () => {
     const req = createMockRequest({
       method: "DELETE",
       url: "http://localhost:3000/api/admin/users/user-1",
@@ -203,7 +214,7 @@ describe("API: /api/admin/users/[id] DELETE", () => {
     const req = createMockRequest({
       method: "DELETE",
       url: "http://localhost:3000/api/admin/users/user-1",
-      headers: createAdminHeaders(),
+      headers: createSuperAdminHeaders(),
     });
     const response = await userDELETE(req);
     expect(response.status).toBe(200);

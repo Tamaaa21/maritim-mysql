@@ -444,7 +444,7 @@ export default function DisplayPage() {
             <div>
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-extrabold text-slate-850 text-sm md:text-base leading-tight">Cuaca Kota Tegal</h3>
+                  <h3 className="font-extrabold text-slate-850 text-sm md:text-base leading-tight">Cuaca Kota Tegal aaa</h3>
                 </div>
                 {weather && (
                   <div className="p-1.5 bg-blue-50 rounded-xl text-blue-600 border border-blue-100 shadow-inner">

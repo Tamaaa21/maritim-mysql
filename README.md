@@ -119,7 +119,7 @@ Migration: `npx drizzle-kit push`
 |------|-------|
 | `super_admin` | Full akses (manajemen users, semua CRUD) |
 | `admin` | Semua fitur kecuali manajemen users |
-| `karyawan` | Terbatas (dashboard, history login, ganti password) |
+| `user` | Terbatas (dashboard, history login, ganti password) |
 
 ## Struktur Project
 
