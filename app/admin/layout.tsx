@@ -195,23 +195,26 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen bg-blue-50/30">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#002266] border-r border-blue-900/40 transition-transform duration-300 lg:relative lg:translate-x-0 overflow-hidden flex flex-col justify-between ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-40 w-72 bg-gradient-to-b from-[#001b4c] to-[#000a24] border-r border-white/5 shadow-2xl lg:shadow-none transition-transform duration-300 lg:relative lg:translate-x-0 overflow-hidden flex flex-col justify-between ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full overflow-hidden relative">
+          {/* Decorative background blur */}
+          <div className="absolute top-0 left-0 w-full h-48 bg-blue-500/10 blur-[80px] pointer-events-none -z-10" />
+
           {/* Sidebar Brand Header */}
-          <div className="p-5 border-b border-blue-900/40 flex items-center gap-3 flex-shrink-0">
-            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white p-1 border border-white/10 shadow-sm flex-shrink-0 flex items-center justify-center">
-              <img src="/bmkg-logo.png" alt="BMKG" loading="lazy" className="w-full h-full object-contain" />
+          <div className="p-6 border-b border-white/5 flex items-center gap-4 flex-shrink-0 z-10 relative">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/5 p-1.5 border border-white/10 shadow-inner flex-shrink-0 flex items-center justify-center backdrop-blur-md">
+              <img src="/bmkg-logo.png" alt="BMKG" loading="lazy" className="w-full h-full object-contain drop-shadow-md" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm font-black text-white leading-tight truncate">BMKG Admin</h1>
-              <p className="text-blue-300 text-[9px] font-bold uppercase tracking-wider truncate">Tegal Maritim</p>
+              <h1 className="text-[15px] font-extrabold text-white leading-tight tracking-wide drop-shadow-sm truncate">BMKG ADMIN</h1>
+              <p className="text-blue-300/80 text-[10px] font-bold uppercase tracking-widest truncate mt-0.5">Tegal Maritim</p>
             </div>
           </div>
 
           {/* Sidebar Navigation items */}
-          <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+          <nav className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent custom-scrollbar">
             {navSections.map((section, idx) => {
               if (section.adminOnly && !isAdmin) return null;
               if (section.superAdminOnly && user?.role !== "super_admin") return null;
@@ -220,10 +223,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 <div key={idx} className="space-y-1">
                   {section.title && (
                     <div className="px-3 pb-2 pt-2">
-                      <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">{section.title}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{section.title}</p>
                     </div>
                   )}
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {section.items.map((item) => {
                       const isActive = pathname === item.href;
                       const Icon = item.icon;
@@ -231,13 +234,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-xs font-semibold ${isActive
-                              ? "bg-white/10 text-white border-l-4 border-blue-400 pl-2 rounded-l-none font-bold"
-                              : "text-blue-200/90 hover:bg-white/5 hover:text-white"
+                          className={`group flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-200 text-[13px] font-medium relative overflow-hidden ${isActive
+                              ? "bg-gradient-to-r from-blue-500/20 to-blue-500/5 text-white border border-blue-500/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] font-semibold"
+                              : "text-slate-300 hover:bg-white/5 hover:text-white"
                             }`}
                         >
-                          <Icon size={16} className={`flex-shrink-0 ${isActive ? "text-blue-300" : "text-blue-400/80"}`} />
-                          <span>{item.label}</span>
+                          {isActive && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-400 rounded-r-full shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+                          )}
+                          <Icon size={18} className={`flex-shrink-0 transition-transform duration-200 relative z-10 ${isActive ? "text-blue-300" : "text-slate-400 group-hover:text-blue-300 group-hover:scale-110"}`} />
+                          <span className="truncate relative z-10">{item.label}</span>
                         </Link>
                       );
                     })}
@@ -248,13 +254,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Sidebar Footer (Logout) */}
-          <div className="p-4 border-t border-blue-900/40 bg-[#001a4d] flex-shrink-0">
+          <div className="p-5 border-t border-white/5 bg-white/[0.02] flex-shrink-0 z-10 backdrop-blur-sm">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-200 hover:text-red-100 border border-red-500/20 text-xs font-bold rounded-xl transition-colors shadow-sm"
+              className="group w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-300 hover:text-red-200 border border-red-500/20 text-xs font-bold rounded-2xl transition-all duration-300 shadow-sm"
             >
-              <LogOut size={14} className="flex-shrink-0" />
-              <span>Keluar</span>
+              <LogOut size={16} className="flex-shrink-0 transition-transform group-hover:-translate-x-1" />
+              <span>Keluar Sistem</span>
             </button>
           </div>
         </div>
